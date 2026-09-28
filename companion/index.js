@@ -685,11 +685,17 @@ async function isModelInstalled() {
     }
 }
 
+function formatMB(bytes) {
+    return (bytes / (1024 * 1024)).toFixed(1);
+}
+
 // Streams Ollama's own pull progress (NDJSON lines like
-// {"status":"downloading","completed":N,"total":M}) straight to the
-// console, so a non-technical user just sees a normal-looking progress log
-// in the same window they already have open, instead of needing to run
-// `ollama pull` themselves in a separate terminal.
+// {"status":"downloading","completed":N,"total":M}) into a live,
+// redrawn-in-place progress bar (same \r-rewrite technique `ollama pull`
+// itself and most CLI download tools use) - so a non-technical user sees
+// real, continuously-updating feedback instead of scrolling percentage
+// lines every so often (which reads as "did it freeze?" during any gap),
+// and never has to run `ollama pull` themselves in a separate terminal.
 async function pullModel() {
     console.log(`Downloading the "${config.model}" AI model - this is a one-time download and may take a few minutes...`);
     const res = await fetch(`${config.ollamaHost}/api/pull`, {
@@ -701,7 +707,10 @@ async function pullModel() {
         throw new Error(`Model download request failed: ${res.status}`);
     }
 
-    let lastLoggedPct = -1;
+    const BAR_WIDTH = 25;
+    let onProgressLine = false;
+    let lastRenderMs = 0;
+
     for await (const chunk of res.body) {
         const lines = chunk.toString('utf8').split('\n').filter(Boolean);
         for (const line of lines) {
@@ -712,15 +721,33 @@ async function pullModel() {
                 continue;
             }
             if (evt.total && evt.completed) {
-                const pct = Math.floor((evt.completed / evt.total) * 100);
-                if (pct !== lastLoggedPct && pct % 10 === 0) {
-                    lastLoggedPct = pct;
-                    console.log(`  ${evt.status || 'downloading'}: ${pct}%`);
+                const now = Date.now();
+                const isDone = evt.completed >= evt.total;
+                // Throttle to ~5 redraws/sec so we're not flooding the
+                // terminal with output for every tiny network chunk -
+                // always render the final 100% frame though.
+                if (!isDone && now - lastRenderMs < 200) {
+                    continue;
                 }
+                lastRenderMs = now;
+                onProgressLine = true;
+                const pct = Math.min(100, Math.floor((evt.completed / evt.total) * 100));
+                const filled = Math.round((pct / 100) * BAR_WIDTH);
+                const bar = '#'.repeat(filled) + '-'.repeat(BAR_WIDTH - filled);
+                process.stdout.write(
+                    `\r  [${bar}] ${pct}% (${formatMB(evt.completed)} / ${formatMB(evt.total)} MB)   `
+                );
             } else if (evt.status) {
+                if (onProgressLine) {
+                    process.stdout.write('\n');
+                    onProgressLine = false;
+                }
                 console.log(`  ${evt.status}`);
             }
         }
+    }
+    if (onProgressLine) {
+        process.stdout.write('\n');
     }
     console.log(`Model "${config.model}" is ready.`);
 }
@@ -755,6 +782,9 @@ async function ensureOllamaReady() {
 
 ensureOllamaReady()
     .then(() => {
+        console.log('');
+        console.log('Everything is set up - you may now enjoy playing!');
+        console.log('');
         setInterval(poll, config.pollMs);
     })
     .catch((err) => {
