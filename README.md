@@ -1,6 +1,7 @@
 # AI Radio Hunt
 
 **GitHub:** [github.com/GabrielSandoval/pz_ai_radio_hunt](https://github.com/GabrielSandoval/pz_ai_radio_hunt)
+
 **Companion downloads:** [Releases page](https://github.com/GabrielSandoval/pz_ai_radio_hunt/releases/latest)
 
 AI Radio Hunt turns your Project Zomboid radio into a scavenger hunt. Somewhere
@@ -15,83 +16,67 @@ reward and a handwritten note.
 
 ## How to Install
 
-Don't worry - there's no coding involved. You're just installing two normal
-programs (like installing any app on your computer) and turning on a mod.
-Do these in order, once, and you're set up for good.
+No coding involved - just two things, once, and you're ready:
 
-### Step 1 - Download and run the AI Radio Hunt Companion
+**1. Set up the Companion app.** Download it, unzip it, run it. It handles
+installing everything else (the AI engine, and the AI model) for you
+automatically.
+**2. Install the mod.** Subscribe on the Workshop, turn it on, hit play.
 
-This is a small program that connects the mod to a free, local AI engine
-called **Ollama** (the "brain" the survivors use to talk to you - it runs
-entirely on your own computer, nothing is sent over the internet). It has
-to be running in the background every time you play. It also takes care of
-installing/setting up Ollama for you - you don't need to do that separately.
+### 1. Set up the Companion app
 
-1. Go to the [**Companion downloads page**](https://github.com/GabrielSandoval/pz_ai_radio_hunt/releases/latest)
-   and download the `.zip` for your operating system (`AIRadioHunt-Companion-Windows.zip`
-   or `AIRadioHunt-Companion-macOS.zip`).
-2. Unzip the file you downloaded.
-3. Open that folder and double-click the file for your system:
-   - **Windows:** `Start AIRadioHunt.bat`
-   - **macOS:** `Start AIRadioHunt.command`
-4. A plain text window will pop up and stay open - **leave it open** the
-   whole time you're playing. It's working correctly as long as that window
-   stays open; if you close it, survivors will stop being able to reply. You
-   can minimize it, just don't close it.
-5. **If this is your first time**, that window will notice Ollama isn't
-   installed yet and automatically open its download page in your browser.
-   Install it like any other program (Next -> Next -> Finish) and open it
-   once - you'll see a small llama icon appear in your system tray (Windows)
-   or menu bar (Mac). Then just go back to the Companion window: it'll
-   detect Ollama is ready and automatically download the AI model it needs
-   (a one-time download, may take a few minutes depending on your internet
-   connection) - no commands to type, just wait for it to say the model is
-   ready.
+1. Download the `.zip` for your OS from the
+   [**Releases page**](https://github.com/GabrielSandoval/pz_ai_radio_hunt/releases/latest)
+   (`AIRadioHunt-Companion-Windows.zip` or `AIRadioHunt-Companion-macOS.zip`),
+   then unzip it.
+2. Double-click the file for your system:
+   **Windows:** `Start AIRadioHunt.bat` &nbsp;|&nbsp; **macOS:** `Start AIRadioHunt.command`
+3. A text window pops up - **leave it open** while you play (minimize it,
+   don't close it). The first time you run it, it'll automatically walk you
+   through installing the free local AI engine it needs and downloading the
+   AI model - just follow what it says on screen, no commands to type.
 
-> **macOS only:** the first time you double-click `Start AIRadioHunt.command`,
-> macOS may say it can't be opened because it's from an unidentified
-> developer. If that happens, right-click (or Control-click) the file
-> instead of double-clicking, choose **Open**, then click **Open** again on
-> the popup - you only need to do this once.
+<details>
+<summary><i>macOS says it can't be opened / more detail on first-time setup</i></summary>
 
-### Step 2 - Install the mod itself
+> If macOS refuses to open `Start AIRadioHunt.command` ("unidentified
+> developer"), right-click (or Control-click) it instead of double-clicking,
+> choose **Open**, then **Open** again on the popup - only needed once.
+>
+> On first run, the Companion window checks whether **Ollama** (the free
+> local AI engine) is installed. If it isn't, it opens Ollama's download
+> page for you automatically - install it like any normal app (Next ->
+> Next -> Finish), open it once, then go back to the Companion window: it
+> detects Ollama and downloads the AI model itself (one-time, a few minutes
+> depending on your connection). No terminal, no commands.
+
+</details>
+
+### 2. Install the mod
 
 1. Subscribe to **AI Radio Hunt** on the Steam Workshop.
-2. Launch Project Zomboid.
-3. From the main menu, click **Mods**, find **AI Radio Hunt** in the list,
-   and switch it on.
-4. From the main menu, click **Host** (not Solo - see below).
-5. On the Host Game screen, click **Manage settings...**
-6. Pick the settings preset you're about to play with (or create a new one),
-   then click **Edit**.
-7. A **"Mods used by this server"** window pops up - click **Choose Mods...**,
-   find **AI Radio Hunt** in the list, and switch it on there too, then click
-   **NEXT**.
-8. In the settings editor that opens, check the left-hand list for a
-   **Mods** page and a **Steam Workshop** page - confirm **AI Radio Hunt**
-   shows up on both (it should have been added automatically by the step
-   above). If it's missing from the Steam Workshop page, add it there too
-   using **"Add an installed Workshop item to the list."**
-9. Click **SAVE**, then back on the Host Game screen, click **START**
-   (restarting the game first if this is an existing save, so the mod
-   actually turns on).
+2. Launch Project Zomboid -> **Mods** -> enable **AI Radio Hunt**.
+3. **Host** -> **Manage settings...** -> pick/edit your settings preset ->
+   **Choose Mods...** -> enable **AI Radio Hunt** there too -> **NEXT** ->
+   **SAVE**.
+4. **START** (restart first if it's an existing save).
 
-> **Why do I have to add it twice (Mods screen *and* server settings)?** The
-> main menu's **Mods** screen only affects your own game client. **Host**
-> mode runs its own separate built-in server behind the scenes, and that
-> server keeps its own independent mod list - it does not automatically
-> pick up whatever's checked in the main menu. Both need AI Radio Hunt
-> enabled, or the mod won't actually load.
+<details>
+<summary><i>Why enable it twice, and why Host instead of Solo?</i></summary>
 
-> **Why Host and not Solo?** It looks and plays exactly like Solo - you're
-> still the only one playing - but Project Zomboid's chat window (which is
-> how survivors' replies actually reach you) only exists in Host or
-> multiplayer games, not Solo. "Host" is just the setting that turns that
-> chat window on.
+> Project Zomboid's chat window - how survivors' replies actually reach you
+> - only exists in Host or multiplayer, not Solo. Host still plays exactly
+> like Solo (still just you), it just needs to be started that way.
+>
+> Host mode also runs its own separate built-in server with its own
+> independent mod list, which doesn't automatically match whatever's
+> checked in the main menu's Mods screen - so it needs enabling in both
+> places, or the mod won't actually load.
 
-That's it - as long as Ollama is running and the Companion window is open,
-you're ready to play. See "How to use it in-game" below for what happens
-next.
+</details>
+
+That's it - as long as the Companion window is open, you're ready to play.
+See "How to use it in-game" below for what happens next.
 
 ## How to use it in-game
 
