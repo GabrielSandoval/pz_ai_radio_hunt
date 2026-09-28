@@ -1,6 +1,8 @@
 require "AIRadioHunt/Config"
+require "AIRadioHunt/Proximity"
 
 local Config = AIRadioHunt.Config
+local Proximity = AIRadioHunt.Proximity
 
 local Context = {}
 AIRadioHunt.Context = Context
@@ -36,10 +38,13 @@ end
 --- same AIRadioHunt_State ModData table HuntState.lua manages, rather than
 --- requiring that module here, to avoid coupling Context.lua's load order
 --- to HuntState.lua's. `city`/`landmark` are the only location facts Lua
---- actually hands the LLM (via the active hunt's Config.Hunts[...].city/
---- .landmark) - real coordinates, addresses, and exact street names are
---- never included here, only these two coarse, game-truth facts the
---- survivor is allowed to state outright.
+--- actually hands the LLM - real coordinates, addresses, and exact street
+--- names are never included here, only these two coarse, game-truth facts
+--- the survivor is allowed to state outright. `landmark` is computed here
+--- (via Proximity.nearestPointOfInterest against Config.PointsOfInterest),
+--- not read from a hardcoded per-hunt field - this is what keeps it working
+--- once hunt target squares are chosen randomly rather than from the fixed
+--- Config.Hunts list.
 function Context.build(player, proximityTier, tierChanged)
     local ctx = {}
 
@@ -50,7 +55,9 @@ function Context.build(player, proximityTier, tierChanged)
 
     local hunt = Config.Hunts[ctx.huntIndex]
     ctx.city = hunt and hunt.city
-    ctx.landmark = hunt and hunt.landmark
+    ctx.landmark = hunt and Proximity.nearestPointOfInterest(
+        hunt.targetX, hunt.targetY, Config.PointsOfInterest, Config.LandmarkMaxDistance
+    )
 
     local gt = getGameTime()
     ctx.survivalTimeHours = gt and round1(gt:getWorldAgeHours()) or 0

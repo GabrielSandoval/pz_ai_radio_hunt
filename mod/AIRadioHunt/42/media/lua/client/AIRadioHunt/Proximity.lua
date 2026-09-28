@@ -30,4 +30,27 @@ function Proximity.tierFor(distance, thresholds)
     return "FAR"
 end
 
+--- Finds whichever entry in `pois` (a list of {name=..., x=..., y=...}) is
+--- closest to (x, y), returning its `name` - or nil if the nearest one is
+--- still farther than `maxDistance` (in tiles), so a target square that
+--- isn't actually near anything nameable just doesn't get a landmark at
+--- all, rather than always forcing a match to whatever's least-far-away.
+--- Purely coordinate math - never invents a name, never guesses; `pois`
+--- must already be real, verified coordinates (see Config.PointsOfInterest).
+function Proximity.nearestPointOfInterest(x, y, pois, maxDistance)
+    local best, bestDistance = nil, nil
+    for _, poi in ipairs(pois) do
+        local dx = x - poi.x
+        local dy = y - poi.y
+        local distance = math.sqrt(dx * dx + dy * dy)
+        if not bestDistance or distance < bestDistance then
+            best, bestDistance = poi, distance
+        end
+    end
+    if best and bestDistance <= maxDistance then
+        return best.name
+    end
+    return nil
+end
+
 return Proximity

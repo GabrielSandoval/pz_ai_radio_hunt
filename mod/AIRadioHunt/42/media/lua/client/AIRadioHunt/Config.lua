@@ -49,25 +49,23 @@ Config.DefaultPersonaName = "Unknown"
 -- 101.2, Unknown Frequency 107.6) - so scanning around never crosses actual
 -- vanilla broadcast content.
 --
--- `city` and `landmark` are the only location facts every survivor is
--- allowed to state outright if asked (see the shared "you may name your
--- city/landmark" rule in companion/index.js's
--- buildSystemPrompt/baseMessages) - real coordinates, street names, and
--- exact addresses stay off-limits regardless. `landmark` is a plain,
--- human description of what's actually near this hunt's own targetX/Y/Z -
--- not computed/looked-up at runtime, just written by hand once, since we
--- already deliberately picked each target square for its real proximity to
--- one of Riverside's named spawnpoint groups (see the targetX/Y/Z comments
--- below). All five hunts share one `city` value since they're all real
--- spawnpoints on the same loaded map; if a future hunt ever moves to a
--- different map, give that entry its own `city` instead.
+-- `city` is a location fact every survivor is allowed to state outright if
+-- asked (see the shared "you may name your city" rule in
+-- companion/index.js's buildSystemPrompt/baseMessages) - real coordinates,
+-- street names, and exact addresses stay off-limits regardless. All five
+-- hunts share one `city` value since they're all real spawnpoints on the
+-- same loaded map; if a future hunt ever moves to a different map, give
+-- that entry its own `city` instead. There is deliberately no per-hunt
+-- `landmark` field here - see Config.PointsOfInterest below: landmark is
+-- computed dynamically from real coordinates, not hand-authored per hunt,
+-- so it keeps working once spawn points are chosen randomly instead of
+-- from this fixed list.
 Config.Hunts = {
     {
         id = "mara",
         personaName = "Mara",
         targetX = 6021, targetY = 5364, targetZ = 0, -- poor_houses entry
         city = "Riverside",
-        landmark = "a quiet residential neighborhood",
         channel = 76000, -- 76.000 MHz
         nextChannel = 84000, -- 84.000 MHz - Jonah, below
     },
@@ -76,7 +74,6 @@ Config.Hunts = {
         personaName = "Jonah",
         targetX = 6119, targetY = 5257, targetZ = 0, -- police_station entry
         city = "Riverside",
-        landmark = "near the police station",
         channel = 84000, -- 84.000 MHz
         nextChannel = 112000, -- 112.000 MHz - Ellis, below
     },
@@ -85,7 +82,6 @@ Config.Hunts = {
         personaName = "Ellis",
         targetX = 7342, targetY = 5981, targetZ = 0, -- poor_houses entry, deliberately the most isolated one (paranoid/reclusive fit)
         city = "Riverside",
-        landmark = "a secluded house, off on its own away from everything else",
         channel = 112000, -- 112.000 MHz
         nextChannel = 128000, -- 128.000 MHz - Nadia, below
     },
@@ -94,7 +90,6 @@ Config.Hunts = {
         personaName = "Nadia",
         targetX = 6817, targetY = 5259, targetZ = 0, -- medium_houses entry
         city = "Riverside",
-        landmark = "a quiet residential street",
         channel = 128000, -- 128.000 MHz
         nextChannel = 144000, -- 144.000 MHz - Reyes, below
     },
@@ -103,12 +98,38 @@ Config.Hunts = {
         personaName = "Reyes",
         targetX = 6081, targetY = 5255, targetZ = 1, -- fire_station entry (upper floor) - fits the ex-military/emergency-services background
         city = "Riverside",
-        landmark = "near the fire station",
         channel = 144000, -- 144.000 MHz
         nextChannel = nil, -- last hunt in the chain for now
     },
 }
 Config.ChannelTolerance = 50
+
+-- Real, named landmarks with real coordinates (all confirmed against the
+-- installed game's own "maps/Riverside, KY/spawnpoints.lua", same source
+-- used to pick the hunts' own targetX/Y above - not guessed or invented).
+-- `Context.build` (see Context.lua) computes the nearest one to whichever
+-- hunt is currently active via `Proximity.nearestPointOfInterest`, rather
+-- than a hardcoded per-hunt `landmark` string - this is what keeps landmark
+-- disclosure working once hunt locations are chosen randomly instead of
+-- from the fixed Config.Hunts list above: any real x/y just gets checked
+-- against this same table at request time.
+--
+-- This list only covers what's independently verifiable from spawnpoints.lua
+-- - it's deliberately small rather than guessed. Expand it with more real
+-- coordinates (from further map/building data) to give landmark disclosure
+-- more variety across the map.
+Config.PointsOfInterest = {
+    { name = "the police station", x = 6119, y = 5257 },
+    { name = "the fire station", x = 6081, y = 5255 },
+    { name = "the doctor's clinic", x = 6658, y = 5247 },
+}
+
+-- How close (in tiles) a hunt's targetX/Y must be to a Config.PointsOfInterest
+-- entry before it counts as "near" that landmark - roughly the same scale as
+-- the NEAR proximity tier above. A target square that isn't within this
+-- distance of anything in the list just doesn't get a landmark at all
+-- (the survivor still may state `city`, just not a specific nearby place).
+Config.LandmarkMaxDistance = 60
 
 -- Starting radio + note given once via Events.OnCreatePlayer (see
 -- HuntState.ensureStartingItems) - this is onboarding for the *first* hunt

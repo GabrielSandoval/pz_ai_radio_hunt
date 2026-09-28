@@ -476,21 +476,44 @@ active, in-character contact.
 
 ## Landmark - the other location fact a survivor may state
 
-Same mechanism as `city` (see "The channel gate + starting items" above),
-extended per direct user request: each `Config.Hunts` entry now also has a
-`landmark` field - a short, hand-written, human description of what's
-actually near that hunt's own `targetX/Y/Z` (e.g. Jonah: `"near the police
-station"`, Reyes: `"near the fire station"`). This is **not** computed or
-looked up against real coordinates at runtime - it's written once by hand,
-since each target square was already deliberately chosen for its proximity
-to one of Riverside's real named spawnpoint groups (poor_houses,
-medium_houses, police_station, fire_station - see each hunt's own comment
-in `Config.lua`). Threaded through `Context.lua` -> `companion/index.js`'s
-`baseMessages` the same way `city` is, appended onto the same dynamic
-system message, with the same "you may state this much, nothing more
-precise" framing. If a future hunt's target square isn't deliberately
-placed near something nameable, just leave `landmark` unset - `city` alone
-still applies.
+Same wire format as `city` (see "The channel gate + starting items" above)
+- threaded through `Context.lua` -> `companion/index.js`'s `baseMessages`
+the same way, appended onto the same dynamic system message, same "you may
+state this much, nothing more precise" framing - but **computed, not
+hand-authored**. An earlier version of this hardcoded a `landmark` string
+per `Config.Hunts` entry; per direct user feedback, that doesn't scale once
+hunt target squares stop being a fixed hand-picked list and start being
+chosen randomly (a planned direction for this mod), so it was replaced with
+real coordinate math:
+
+- `Config.PointsOfInterest` (`Config.lua`) is a list of real, named
+  landmarks with real coordinates - currently just the three independently
+  verifiable against the installed game's own `spawnpoints.lua` (police
+  station, fire station, doctor's clinic). Deliberately small rather than
+  guessed - every entry here needs a real, checkable coordinate, not an
+  invented one.
+- `Proximity.nearestPointOfInterest(x, y, pois, maxDistance)` (`Proximity.lua`)
+  is generic Euclidean nearest-neighbor search, returning the closest
+  entry's `name` only if it's within `maxDistance` (`Config.LandmarkMaxDistance`,
+  60 tiles) - otherwise `nil`, so a target square that isn't actually near
+  anything nameable just doesn't get a landmark (honest silence, not
+  invented flavor text) rather than always forcing a match to whatever's
+  least-far-away.
+- `Context.build` calls this directly against the active hunt's real
+  `targetX/Y` every request - there's no per-hunt authoring step left at
+  all. Verified against the current `Config.Hunts` list with a standalone
+  Lua test: Jonah and Reyes correctly resolve to the police station and
+  fire station respectively (they were deliberately placed there); Mara,
+  Ellis, and Nadia correctly resolve to no landmark at all, since none of
+  their real target squares are actually near any of the three known
+  points of interest - which is *more* honest than the hand-written
+  version's invented "a quiet residential neighborhood" flavor text.
+
+This is the pattern to extend once hunt placement becomes random: as long
+as whatever generates a new hunt's `targetX/Y` is real Lua-side game data,
+landmark disclosure keeps working with zero extra authoring - just grow
+`Config.PointsOfInterest` with more real, verified coordinates over time
+for richer variety.
 
 ## NEAR now prefers a full outfit over a single item, and clothing over a weapon
 
