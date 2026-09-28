@@ -1,0 +1,4 @@
+name=AI Radio Hunt
+id=AIRadioHunt
+poster=poster.png
+description=Track down a hidden AI survivor by radio, find their walkie-talkie, and read their note - powered by a local AI model via a companion process running alongside the game.
