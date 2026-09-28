@@ -1,5 +1,8 @@
 # AI Radio Hunt
 
+**GitHub:** [github.com/GabrielSandoval/pz_ai_radio_hunt](https://github.com/GabrielSandoval/pz_ai_radio_hunt)
+**Companion downloads:** [Releases page](https://github.com/GabrielSandoval/pz_ai_radio_hunt/releases/latest)
+
 AI Radio Hunt turns your Project Zomboid radio into a scavenger hunt. Somewhere
 out there, a survivor - **Mara** - has a walkie-talkie of her own. Talk to
 her, listen for how close you're getting, and track down where she's
@@ -46,9 +49,10 @@ your own computer - nothing is sent over the internet, and it's free.
 This is a small program that connects the mod to Ollama. It has to be
 running in the background every time you play.
 
-1. Download the **AI Radio Hunt Companion** for your operating system
-   (link on this mod's page).
-2. Unzip the folder you downloaded, if it came as a `.zip`.
+1. Go to the [**Companion downloads page**](https://github.com/GabrielSandoval/pz_ai_radio_hunt/releases/latest)
+   and download the `.zip` for your operating system (`AIRadioHunt-Companion-Windows.zip`
+   or `AIRadioHunt-Companion-macOS.zip`).
+2. Unzip the file you downloaded.
 3. Open that folder and double-click the file for your system:
    - **Windows:** `Start AIRadioHunt.bat`
    - **macOS:** `Start AIRadioHunt.command`
