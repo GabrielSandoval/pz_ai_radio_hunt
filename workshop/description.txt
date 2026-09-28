@@ -29,4 +29,10 @@ This is an early, actively-developed build - a short fixed chain of survivors, f
 [list]
 [*] Must be played in [b]Host[/b] (not Solo) - Host looks and plays identically to Solo, it's just what turns on the in-game chat window survivors reply through.
 [*] The companion app + Ollama (see link above) must be running on your PC whenever you play.
+[*] [b]Important:[/b] enabling this in the main menu's Mods screen alone is NOT enough for Host. Host mode runs its own separate built-in server with its own independent mod list - go to [b]Host -> Manage settings... -> Edit[/b], and add AI Radio Hunt on BOTH the "Mods" page AND the "Steam Workshop" page (these are two separate lists that don't always sync automatically). If the Workshop page doesn't show it in the dropdown, add it manually by ID:
+[list]
+[*] Mod ID: [b]AIRadioHunt[/b]
+[*] Workshop Item ID: [b]3809785412[/b]
+[/list]
+Skipping this step is the most common reason the mod loads for you but survivors never respond - the server log will say [b]"required mod \"AIRadioHunt\" not found"[/b] if this is missed.
 [/list]

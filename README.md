@@ -57,9 +57,14 @@ automatically.
 1. Subscribe to **AI Radio Hunt** on the Steam Workshop.
 2. Launch Project Zomboid -> **Mods** -> enable **AI Radio Hunt**.
 3. **Host** -> **Manage settings...** -> pick/edit your settings preset ->
-   **Choose Mods...** -> enable **AI Radio Hunt** there too -> **NEXT** ->
-   **SAVE**.
-4. **START** (restart first if it's an existing save).
+   **Choose Mods...** -> enable **AI Radio Hunt** there too -> **NEXT**.
+4. **Important:** in the settings editor's left-hand list, check **both**
+   the **Mods** page and the **Steam Workshop** page - confirm **AI Radio
+   Hunt** shows up on both (the step above doesn't always add it to the
+   Workshop page automatically). If it's missing from the Steam Workshop
+   page, add it yourself using **"Add an installed Workshop item to the
+   list"** (or by ID, if needed - see below), then **SAVE**.
+5. **START** (restart first if it's an existing save).
 
 <details>
 <summary><i>Why enable it twice, and why Host instead of Solo?</i></summary>
@@ -72,6 +77,15 @@ automatically.
 > independent mod list, which doesn't automatically match whatever's
 > checked in the main menu's Mods screen - so it needs enabling in both
 > places, or the mod won't actually load.
+>
+> There are actually **two separate lists** inside the server settings
+> editor itself - a "Mods" page and a "Steam Workshop" page - and enabling
+> it via "Choose Mods..." doesn't reliably populate both. If you skip this,
+> the server log will say `required mod "AIRadioHunt" not found`, and
+> nothing will work even though the mod appears enabled everywhere else. If
+> you ever need to add it manually by ID instead of picking it from a list:
+> - Mod ID: `AIRadioHunt`
+> - Workshop Item ID: `3809785412`
 
 </details>
 
