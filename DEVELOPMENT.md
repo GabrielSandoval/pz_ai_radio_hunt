@@ -157,14 +157,15 @@ rsync -a --delete mod/AIRadioHunt/ ~/Zomboid/mods/AIRadioHunt/
 Each hunt's `targetX/targetY/targetZ` is now randomly picked per character
 from `Config.SpawnPointPool` (see "Random hunt locations and channels"
 below) rather than a fixed `Config.Hunts[n]` field - every pool entry is a
-real occupation spawn-point square inside houses in Riverside, pulled
-directly from the installed game's own `maps/Riverside, KY/spawnpoints.lua`
+real occupation spawn-point square inside houses in one of five covered
+towns (Riverside, Muldraugh, West Point, Rosewood, March Ridge), pulled
+directly from each town's own installed `maps/<Town>, KY/spawnpoints.lua`
 (`poor_houses`/`medium_houses`/`rich_houses` entries) rather than picked by
 hand, so every possible pick is guaranteed a valid, loaded, walkable
-interior tile without needing to hand-verify a square in-game first. If you
-want to draw from a different town later, the same trick works for any of
-them: check that town's own `maps/<Town>/spawnpoints.lua` in the installed
-game and add its coordinates to the pool rather than guessing. No item is
+interior tile without needing to hand-verify a square in-game first. Adding
+another town later works the same way: check that town's own
+`maps/<Town>/spawnpoints.lua` in the installed game and add its coordinates
+(with that town's own `city` value) to the pool rather than guessing. No item is
 pre-spawned at any square - finding a survivor is purely a matter of the
 player's proximity tier reaching `EXTREMELY_NEAR` there (see
 Proximity.lua); the only physical evidence left behind is the found-note
@@ -271,14 +272,17 @@ removed from `companion/index.js` entirely, no longer needed).
 **Survivors may now name their city, nothing finer.** Every persona's
 location-ignorance rule previously banned any place name outright. Per
 direct user feedback, this was loosened by exactly one fact: each
-`Config.Hunts` entry now has a `city` field (`"Riverside"` for all five
-hunts currently, since they're all real spawnpoints on the same loaded
-map), threaded through unchanged - `Context.build` reads it off the active
-hunt, the companion's `baseMessages` turns it into a plain system message
-("You're currently in/near Riverside..."), and every `systemPrompt`
-explicitly permits stating it if directly asked. Real coordinates, street
-names, landmarks, and distance/direction are all still off-limits exactly
-as before - this is Lua handing over one specific fact, not the model
+generated hunt has a `city` field (originally `"Riverside"` for all five
+hunts, back when locations were fixed and all on one map - now whichever
+real town that hunt's randomly-picked `Config.SpawnPointPool` entry
+actually belongs to, since the pool spans five towns - see "Random hunt
+locations and channels" below), threaded through unchanged - `Context.build`
+reads it off the active hunt, the companion's `baseMessages` turns it into
+a plain system message ("You're currently in/near Riverside..." or
+whichever town it actually is), and every `systemPrompt` explicitly permits
+stating it if directly asked. Real coordinates, street names, landmarks,
+and distance/direction are all still off-limits exactly as before - this
+is Lua handing over one specific fact, not the model
 deciding what's safe to reveal.
 
 **Grounding the LLM-written half of the note** - the note prompt alone
@@ -490,14 +494,23 @@ rather than everyone finding the exact same five spots on the exact same
 five frequencies.
 
 - **Location**: `Config.SpawnPointPool` is a flat list of real, verified,
-  walkable coordinates pulled from the installed game's own
-  `spawnpoints.lua` (the same `poor_houses`/`medium_houses`/`rich_houses`
-  groups used to hand-pick locations before - now the whole pool, not one
-  entry each). `pickSpawnPoints` shuffles it and greedily takes entries at
-  least `Config.MinHuntSeparation` (100 tiles) from every previous pick for
-  this character, falling back to filling remaining slots without that
-  constraint if the pool can't satisfy it for every slot (not an issue at
-  the current pool size vs. hunt count - 18 candidates for 5 hunts).
+  walkable coordinates, now spanning **five towns** - Riverside, Muldraugh,
+  West Point, Rosewood, and March Ridge - not just Riverside (per direct
+  user request: "make it not limited to riverside"). Each entry carries its
+  own `city`, pulled from that town's own installed `spawnpoints.lua`
+  (`poor_houses`/`medium_houses`/`rich_houses` groups - the same kind of
+  data used to hand-pick locations before, now the whole pool across every
+  covered town, not one entry each). March Ridge only contributes a single
+  point - its own `spawnpoints.lua` defines no poor/medium/rich_houses split
+  at all, matching this project's earlier note that it never had its own
+  gun store/fire department/auto shop either. 73 candidates total for 5
+  hunts. `pickSpawnPoints` shuffles the whole pool and greedily takes
+  entries at least `Config.MinHuntSeparation` (100 tiles) from every
+  previous pick for this character - in practice this constraint only ever
+  matters for two picks that land in the *same* town, since different
+  towns' entries are already thousands of tiles apart - falling back to
+  filling remaining slots without that constraint if the pool can't satisfy
+  it for every slot (not an issue at the current pool size vs. hunt count).
 - **Channel**: `pickChannels` randomly picks a value on the real 0.2 MHz
   tuning grid inside `Config.ChannelMin`-`ChannelMax` (75.0-150.0 MHz, same
   constraints as before - see "The channel gate + starting items" below),
@@ -512,9 +525,11 @@ five frequencies.
   `nextFrequencyPostscript` both read this character's own generated
   channel at the point the note is actually written, rather than a
   constant.
-- Verified with a standalone Lua test simulating 5 different "characters":
-  every run produced distinct, correctly-separated locations and channels,
-  all on the real tuning grid, all clear of vanilla stations.
+- Verified with a standalone Lua test simulating 8 different "characters":
+  every run produced distinct, correctly-separated locations and channels
+  across multiple different towns, all on the real tuning grid, all clear
+  of vanilla stations, with landmark lookup (see below) still resolving
+  correctly for picks near a known point of interest in any covered town.
 
 This intentionally reuses the exact same shape (`id`, `personaName`,
 `targetX/Y/Z`, `city`, `channel`, `nextChannel`) that `Config.Hunts` entries
@@ -537,11 +552,16 @@ chosen randomly (a planned direction for this mod), so it was replaced with
 real coordinate math:
 
 - `Config.PointsOfInterest` (`Config.lua`) is a list of real, named
-  landmarks with real coordinates - currently just the three independently
-  verifiable against the installed game's own `spawnpoints.lua` (police
-  station, fire station, doctor's clinic). Deliberately small rather than
-  guessed - every entry here needs a real, checkable coordinate, not an
-  invented one.
+  landmarks with real coordinates - nine currently, spanning the four towns
+  with a dedicated named landmark group in their own `spawnpoints.lua`
+  (Riverside: police station, fire station, doctor's clinic; Muldraugh:
+  police station, doctor's clinic; West Point: doctor's clinic, fire
+  station; Rosewood: fire station, police station - March Ridge has none,
+  its own `spawnpoints.lua` defines no such group at all). Deliberately
+  small rather than guessed - every entry here needs a real, checkable
+  coordinate, not an invented one. Reusing generic names across different
+  towns is intentional and harmless - nearest-neighbor lookup only ever
+  surfaces the one actually close to a given hunt's real location.
 - `Proximity.nearestPointOfInterest(x, y, pois, maxDistance)` (`Proximity.lua`)
   is generic Euclidean nearest-neighbor search, returning the closest
   entry's `name` only if it's within `maxDistance` (`Config.LandmarkMaxDistance`,

@@ -159,7 +159,7 @@ function HuntState.ensureHuntsGenerated(player)
             targetX = point.x,
             targetY = point.y,
             targetZ = point.z,
-            city = Config.SpawnPointCity,
+            city = point.city,
             channel = channels[i],
             nextChannel = channels[i + 1], -- nil for the last hunt, correctly
         }
