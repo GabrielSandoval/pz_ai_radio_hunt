@@ -464,6 +464,33 @@ proximity check before the companion's (much slower) Ollama round trip
 ever completed. Player-typed chat intentionally does **not** wait, matching
 DispatchAI's existing documented behavior (no rate-limit on typed chat).
 
+## Host mode has two separate mod lists - both need the mod added
+
+Found via a real Windows Workshop-install test that otherwise looked
+correctly set up (mod loaded client-side, printed its own "mod loaded, chat
+hook installed" line, appeared enabled in the main menu's Mods screen) but
+never responded to anything - not even the synchronous `aicoordinates` debug
+command. The actual cause was in the **server**'s own debug log:
+`required mod "AIRadioHunt" not found`.
+
+Host mode runs its own separate embedded server with its own independent
+mod configuration (`Mods=`/`WorkshopItems=` in the selected server settings
+preset - see "The channel gate + starting items" above, and the real UI
+navigation confirmed in `README.md`'s install steps: **Host -> Manage
+settings... -> Edit**). That editor has **two separate pages** - a "Mods"
+page and a "Steam Workshop" page - and using **"Choose Mods..."** to enable
+the mod does not reliably populate both. If the mod ends up listed on the
+Mods page but missing from the Steam Workshop page, the server can't
+resolve where to actually find/download its content, even though the
+client-side game happily loads its own copy and everything else *looks*
+enabled.
+
+Fix: on the Steam Workshop page specifically, add it via **"Add an
+installed Workshop item to the list"**, or manually by ID if it doesn't
+show up in that picker:
+- Mod ID: `AIRadioHunt`
+- Workshop Item ID: `3809785412`
+
 ## Testing
 
 **PZ doesn't hot-reload mod Lua, server scripts included** - after
