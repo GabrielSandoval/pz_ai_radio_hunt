@@ -450,6 +450,63 @@ in-fiction reason to exist: she's still out there somewhere, reachable on
 the next frequency - which is now a literal next hunt in `Config.Hunts`,
 not just a narrative gesture.
 
+## Completing a hunt must not depend on staying tuned to its own channel
+
+Found in real testing: a player who retuned their radio to the *next*
+hunt's frequency (found in the current hunt's note) before physically
+walking onto the current hunt's exact target square hit a permanent
+deadlock - `onPlayerUpdate` gated almost everything behind
+`isCarryingTunedRadio(player)`, checked against whichever hunt was still
+*currently* active. Once retuned away, that gate returned false every tick,
+so the SAME_SQUARE/found check never ran again, `HuntState.completeHunt`
+never fired, `activeHuntIndex` never advanced, and the next survivor never
+started either - even though the player had already read the note lying
+right there on the ground (picking up a spawned world item was never
+gated on hunt state to begin with, so that part "worked" while the actual
+completion silently never could).
+
+Fix (`AIRadioHunt.lua`'s `onPlayerUpdate`): once `HuntState.areItemsSpawned`
+is true for the active hunt, checking proximity and firing `"found"` now
+happens in its own early branch, *before* the `isCarryingTunedRadio` gate -
+completing a hunt only ever depended on physically reaching its square, not
+on what the radio happens to be tuned to at that moment. The radio-tuned
+gate still applies to everything upstream of that (starting a hunt,
+NEAR/VERY_NEAR reactions), since those genuinely are meant to require
+active, in-character contact.
+
+## Landmark - the other location fact a survivor may state
+
+Same mechanism as `city` (see "The channel gate + starting items" above),
+extended per direct user request: each `Config.Hunts` entry now also has a
+`landmark` field - a short, hand-written, human description of what's
+actually near that hunt's own `targetX/Y/Z` (e.g. Jonah: `"near the police
+station"`, Reyes: `"near the fire station"`). This is **not** computed or
+looked up against real coordinates at runtime - it's written once by hand,
+since each target square was already deliberately chosen for its proximity
+to one of Riverside's real named spawnpoint groups (poor_houses,
+medium_houses, police_station, fire_station - see each hunt's own comment
+in `Config.lua`). Threaded through `Context.lua` -> `companion/index.js`'s
+`baseMessages` the same way `city` is, appended onto the same dynamic
+system message, with the same "you may state this much, nothing more
+precise" framing. If a future hunt's target square isn't deliberately
+placed near something nameable, just leave `landmark` unset - `city` alone
+still applies.
+
+## NEAR now prefers a full outfit over a single item, and clothing over a weapon
+
+`findSpottedItem` (`AIRadioHunt.lua`) previously returned a wielded weapon
+first if the player had one equipped, falling back to one random piece of
+visible clothing. Per direct user feedback, this was inverted and expanded:
+clothing is now checked first, and instead of naming just one piece, up to
+two (Fisher-Yates shuffled, so it's not always the same body location)
+worn items are combined into one natural phrase - e.g. `"Lumberjack's Shirt
+and Military Trousers"` - handed to the companion as a single
+`context.spottedItem` string exactly as before (`near`'s prompt in
+`companion/index.js` didn't need to change; a two-item phrase reads
+naturally in the same "are you wearing ___?" sentence shape). A wielded
+weapon is now only the fallback, used if the player has no visible worn
+clothing in `VISIBLE_BODY_LOCATIONS` at all.
+
 ## The single in-flight request guard
 
 DispatchAI's `Bridge` only ever tracks one `pendingRequestId` at a time, and

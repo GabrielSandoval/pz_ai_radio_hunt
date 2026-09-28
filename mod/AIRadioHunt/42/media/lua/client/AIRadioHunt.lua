@@ -271,14 +271,60 @@ local VISIBLE_BODY_LOCATIONS = {
     scba = true, scbanotank = true, vesttexture = true, torso = true, legs = true,
 }
 
---- Picks one real, visually-obvious equipped item - a wielded weapon (most
---- salient), or otherwise a real piece of worn clothing (never a small
---- accessory) - so the active survivor can plausibly reference "someone
+--- Picks a real, visually-obvious description of what the player is
+--- wearing - preferring an actual outfit combination (e.g. "Lumberjack's
+--- Shirt and Military Trousers") over a single item, and clothing over a
+--- wielded weapon - so the active survivor can plausibly reference "someone
 --- wearing/carrying ___" when she actually spots the player at NEAR range.
 --- This is real game data gathered here in Lua and handed to the companion
 --- as context; the LLM is never left to invent or guess what the player is
 --- wearing.
 local function findSpottedItem(player)
+    local candidates = {}
+    local okWorn, worn = pcall(function() return player:getWornItems() end)
+    if okWorn and worn then
+        local okSize, size = pcall(function() return worn:size() end)
+        if okSize and size then
+            for i = 0, size - 1 do
+                local okItem, item = pcall(function() return worn:getItemByIndex(i) end)
+                if okItem and item then
+                    local okLoc, location = pcall(function() return item:getBodyLocation() end)
+                    if okLoc and location then
+                        local key = tostring(location):gsub("^base:", ""):lower()
+                        if VISIBLE_BODY_LOCATIONS[key] then
+                            table.insert(candidates, item)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if #candidates > 0 then
+        -- Shuffle (Fisher-Yates) so which piece(s) get named varies rather
+        -- than always favoring whatever index worn items happen to sit at.
+        for i = #candidates, 2, -1 do
+            local j = ZombRand(i) + 1
+            candidates[i], candidates[j] = candidates[j], candidates[i]
+        end
+
+        local names = {}
+        for i = 1, math.min(2, #candidates) do
+            local okName, name = pcall(function() return candidates[i]:getDisplayName() end)
+            if okName and name then
+                table.insert(names, name)
+            end
+        end
+
+        if #names == 2 then
+            return names[1] .. " and " .. names[2]
+        elseif #names == 1 then
+            return names[1]
+        end
+    end
+
+    -- No visible clothing found (or names failed to resolve) - fall back to
+    -- a wielded weapon, still real game data either way.
     local okPrimary, primary = pcall(function() return player:getPrimaryHandItem() end)
     if okPrimary and primary then
         local okName, name = pcall(function() return primary:getDisplayName() end)
@@ -287,35 +333,7 @@ local function findSpottedItem(player)
         end
     end
 
-    local okWorn, worn = pcall(function() return player:getWornItems() end)
-    if not okWorn or not worn then
-        return nil
-    end
-
-    local candidates = {}
-    local okSize, size = pcall(function() return worn:size() end)
-    if okSize and size then
-        for i = 0, size - 1 do
-            local okItem, item = pcall(function() return worn:getItemByIndex(i) end)
-            if okItem and item then
-                local okLoc, location = pcall(function() return item:getBodyLocation() end)
-                if okLoc and location then
-                    local key = tostring(location):gsub("^base:", ""):lower()
-                    if VISIBLE_BODY_LOCATIONS[key] then
-                        table.insert(candidates, item)
-                    end
-                end
-            end
-        end
-    end
-
-    if #candidates == 0 then
-        return nil
-    end
-
-    local pick = candidates[ZombRand(#candidates) + 1]
-    local okName, name = pcall(function() return pick:getDisplayName() end)
-    return (okName and name) or nil
+    return nil
 end
 
 --- Drives the hunt's ambient side: starting the hunt the first time a tuned
@@ -348,13 +366,41 @@ local function onPlayerUpdate(player)
     -- carries all the mod's other traffic).
     HuntState.ensureStartingItems(player)
 
-    if not isCarryingTunedRadio(player) then
-        return
-    end
-
     local hunt = HuntState.getActiveHunt(player)
     if not hunt then
         return -- every hunt in the chain has already been completed
+    end
+
+    if HuntState.isFound(player) then
+        return
+    end
+
+    -- Once this hunt's reward/note are already spawned (VERY_NEAR already
+    -- fired), completing it must NOT depend on the radio still being tuned
+    -- to this hunt's own channel - the note already tells the player the
+    -- next hunt's frequency, and retuning to try it early (entirely
+    -- natural) would otherwise deadlock things: isCarryingTunedRadio would
+    -- never match this still-active hunt's channel again, so it could
+    -- never reach SAME_SQUARE, activeHuntIndex would never advance, and
+    -- the next survivor would never start either - confirmed exactly this
+    -- happening in testing with Jonah -> Ellis.
+    if HuntState.areItemsSpawned(player) then
+        if not pendingRequestId then
+            local distance = Proximity.tileDistance(player, hunt.targetX, hunt.targetY)
+            local tier = Proximity.tierFor(distance, Config.ProximityTiers)
+            if tier == "SAME_SQUARE" then
+                print("[AIRadioHunt] found: player reached " .. hunt.personaName .. "'s target square")
+                local context = Context.build(player, tier, true)
+                pendingRequestId = Bridge.sendRequest(nil, context, "found")
+                pendingRequestKind = "found"
+                lastTier = tier
+            end
+        end
+        return
+    end
+
+    if not isCarryingTunedRadio(player) then
+        return
     end
 
     if not HuntState.isStarted(player) then
@@ -365,10 +411,6 @@ local function onPlayerUpdate(player)
             pendingRequestId = Bridge.sendRequest(nil, context, "start")
             pendingRequestKind = "start"
         end
-        return
-    end
-
-    if HuntState.isFound(player) then
         return
     end
 
@@ -397,11 +439,10 @@ local function onPlayerUpdate(player)
         -- request clears, so reaching the target square is never silently
         -- missed just because a sound trigger happened to fire the same tick.
     elseif tier == "VERY_NEAR" then
-        if HuntState.areItemsSpawned(player) then
-            -- Already handled (e.g. the player backed off and re-entered
-            -- VERY_NEAR range) - nothing new to do.
-            lastTier = tier
-        elseif not pendingRequestId then
+        -- Once items are spawned, the early return above (still tuned to
+        -- this hunt's channel or not) handles everything from here on -
+        -- this branch only ever runs before that first happens.
+        if not pendingRequestId then
             local context = Context.build(player, tier, true)
             pendingRequestId = Bridge.sendRequest(nil, context, "very_near")
             pendingRequestKind = "very_near"

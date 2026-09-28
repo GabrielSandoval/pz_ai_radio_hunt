@@ -49,19 +49,25 @@ Config.DefaultPersonaName = "Unknown"
 -- 101.2, Unknown Frequency 107.6) - so scanning around never crosses actual
 -- vanilla broadcast content.
 --
--- `city` is the only location fact every survivor is allowed to state
--- outright if asked (see the shared "you may name your city" rule in
--- companion/index.js's buildSystemPrompt/baseMessages) - real coordinates,
--- street names, and landmarks stay off-limits regardless. All five hunts
--- below are real spawnpoints on the same loaded map, so they share one
--- value; if a future hunt ever moves to a different map, give that entry
--- its own `city` instead.
+-- `city` and `landmark` are the only location facts every survivor is
+-- allowed to state outright if asked (see the shared "you may name your
+-- city/landmark" rule in companion/index.js's
+-- buildSystemPrompt/baseMessages) - real coordinates, street names, and
+-- exact addresses stay off-limits regardless. `landmark` is a plain,
+-- human description of what's actually near this hunt's own targetX/Y/Z -
+-- not computed/looked-up at runtime, just written by hand once, since we
+-- already deliberately picked each target square for its real proximity to
+-- one of Riverside's named spawnpoint groups (see the targetX/Y/Z comments
+-- below). All five hunts share one `city` value since they're all real
+-- spawnpoints on the same loaded map; if a future hunt ever moves to a
+-- different map, give that entry its own `city` instead.
 Config.Hunts = {
     {
         id = "mara",
         personaName = "Mara",
         targetX = 6021, targetY = 5364, targetZ = 0, -- poor_houses entry
         city = "Riverside",
+        landmark = "a quiet residential neighborhood",
         channel = 76000, -- 76.000 MHz
         nextChannel = 84000, -- 84.000 MHz - Jonah, below
     },
@@ -70,6 +76,7 @@ Config.Hunts = {
         personaName = "Jonah",
         targetX = 6119, targetY = 5257, targetZ = 0, -- police_station entry
         city = "Riverside",
+        landmark = "near the police station",
         channel = 84000, -- 84.000 MHz
         nextChannel = 112000, -- 112.000 MHz - Ellis, below
     },
@@ -78,6 +85,7 @@ Config.Hunts = {
         personaName = "Ellis",
         targetX = 7342, targetY = 5981, targetZ = 0, -- poor_houses entry, deliberately the most isolated one (paranoid/reclusive fit)
         city = "Riverside",
+        landmark = "a secluded house, off on its own away from everything else",
         channel = 112000, -- 112.000 MHz
         nextChannel = 128000, -- 128.000 MHz - Nadia, below
     },
@@ -86,6 +94,7 @@ Config.Hunts = {
         personaName = "Nadia",
         targetX = 6817, targetY = 5259, targetZ = 0, -- medium_houses entry
         city = "Riverside",
+        landmark = "a quiet residential street",
         channel = 128000, -- 128.000 MHz
         nextChannel = 144000, -- 144.000 MHz - Reyes, below
     },
@@ -94,6 +103,7 @@ Config.Hunts = {
         personaName = "Reyes",
         targetX = 6081, targetY = 5255, targetZ = 1, -- fire_station entry (upper floor) - fits the ex-military/emergency-services background
         city = "Riverside",
+        landmark = "near the fire station",
         channel = 144000, -- 144.000 MHz
         nextChannel = nil, -- last hunt in the chain for now
     },

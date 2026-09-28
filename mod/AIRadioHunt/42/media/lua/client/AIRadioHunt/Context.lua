@@ -35,10 +35,11 @@ end
 --- survivor's conversation memory separate) - read directly out of the
 --- same AIRadioHunt_State ModData table HuntState.lua manages, rather than
 --- requiring that module here, to avoid coupling Context.lua's load order
---- to HuntState.lua's. `city` is the one location fact Lua actually hands
---- the LLM (via the active hunt's Config.Hunts[...].city) - real
---- coordinates, addresses, and landmarks are never included here, only this
---- one coarse, game-truth fact the survivor is allowed to state outright.
+--- to HuntState.lua's. `city`/`landmark` are the only location facts Lua
+--- actually hands the LLM (via the active hunt's Config.Hunts[...].city/
+--- .landmark) - real coordinates, addresses, and exact street names are
+--- never included here, only these two coarse, game-truth facts the
+--- survivor is allowed to state outright.
 function Context.build(player, proximityTier, tierChanged)
     local ctx = {}
 
@@ -49,6 +50,7 @@ function Context.build(player, proximityTier, tierChanged)
 
     local hunt = Config.Hunts[ctx.huntIndex]
     ctx.city = hunt and hunt.city
+    ctx.landmark = hunt and hunt.landmark
 
     local gt = getGameTime()
     ctx.survivalTimeHours = gt and round1(gt:getWorldAgeHours()) or 0
