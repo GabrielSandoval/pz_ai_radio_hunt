@@ -159,10 +159,10 @@ Config.RewardItem = "Base.Bandage"
 Config.NoteItem = "Base.Notepad"
 
 -- Euclidean tile-distance thresholds for each proximity tier, checked
--- closest-first (see Proximity.lua). SAME_SQUARE is treated as "found".
+-- closest-first (see Proximity.lua). EXTREMELY_NEAR is treated as "found".
 Config.ProximityTiers = {
-    SAME_SQUARE = 1,
-    VERY_NEAR = 15,
+    EXTREMELY_NEAR = 5,
+    VERY_NEAR = 20,
     NEAR = 60,
     FAR = 200,
 }

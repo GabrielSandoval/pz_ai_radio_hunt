@@ -162,7 +162,7 @@ location later, the same trick works for any town: check that town's own
 `maps/<Town>/spawnpoints.lua` in the installed game and reuse one of its
 coordinates rather than guessing. No item is pre-spawned at either square -
 finding a survivor is purely a matter of the player's proximity tier
-reaching `SAME_SQUARE` there (see Proximity.lua); the only physical
+reaching `EXTREMELY_NEAR` there (see Proximity.lua); the only physical
 evidence left behind is the found-note (see below), not a second
 discoverable radio.
 
@@ -435,7 +435,7 @@ way (prompt wording, not code-level filtering):**
 
 ## Survivors aren't physically at their target square
 
-The `"found"` trigger (`SAME_SQUARE`) does **not** mean the player caught
+The `"found"` trigger (`EXTREMELY_NEAR`) does **not** mean the player caught
 the current survivor in person - she'd already had to leave before they
 arrived, and the `reply` is her explaining that live over the radio with a
 grounded excuse, not "you found me." This was a deliberate reframing: the
@@ -458,7 +458,7 @@ walking onto the current hunt's exact target square hit a permanent
 deadlock - `onPlayerUpdate` gated almost everything behind
 `isCarryingTunedRadio(player)`, checked against whichever hunt was still
 *currently* active. Once retuned away, that gate returned false every tick,
-so the SAME_SQUARE/found check never ran again, `HuntState.completeHunt`
+so the EXTREMELY_NEAR/found check never ran again, `HuntState.completeHunt`
 never fired, `activeHuntIndex` never advanced, and the next survivor never
 started either - even though the player had already read the note lying
 right there on the ground (picking up a spawned world item was never

@@ -345,7 +345,7 @@ end
 --- interference" line with no LLM call. NEAR is a real LLM reaction (she
 --- visually spots the player, referencing a real equipped item). VERY_NEAR
 --- silently spawns the reward/note ahead of arrival (see
---- HuntState.spawnLeaveItems) - nothing shown to the player yet. SAME_SQUARE
+--- HuntState.spawnLeaveItems) - nothing shown to the player yet. EXTREMELY_NEAR
 --- is the actual reveal: the survivor's "I had to go" line plays, the hunt
 --- is marked found, and the chain may advance to the next survivor - see
 --- HuntState.completeHunt. Mirrors DispatchAI's OnPlayerUpdate polling
@@ -381,14 +381,14 @@ local function onPlayerUpdate(player)
     -- next hunt's frequency, and retuning to try it early (entirely
     -- natural) would otherwise deadlock things: isCarryingTunedRadio would
     -- never match this still-active hunt's channel again, so it could
-    -- never reach SAME_SQUARE, activeHuntIndex would never advance, and
+    -- never reach EXTREMELY_NEAR, activeHuntIndex would never advance, and
     -- the next survivor would never start either - confirmed exactly this
     -- happening in testing with Jonah -> Ellis.
     if HuntState.areItemsSpawned(player) then
         if not pendingRequestId then
             local distance = Proximity.tileDistance(player, hunt.targetX, hunt.targetY)
             local tier = Proximity.tierFor(distance, Config.ProximityTiers)
-            if tier == "SAME_SQUARE" then
+            if tier == "EXTREMELY_NEAR" then
                 print("[AIRadioHunt] found: player reached " .. hunt.personaName .. "'s target square")
                 local context = Context.build(player, tier, true)
                 pendingRequestId = Bridge.sendRequest(nil, context, "found")
@@ -427,7 +427,7 @@ local function onPlayerUpdate(player)
         return
     end
 
-    if tier == "SAME_SQUARE" then
+    if tier == "EXTREMELY_NEAR" then
         if not pendingRequestId then
             print("[AIRadioHunt] found: player reached " .. hunt.personaName .. "'s target square")
             local context = Context.build(player, tier, true)
@@ -581,7 +581,7 @@ local function onTick()
         -- Silent to the player: this is the note being written and the
         -- reward/note physically appearing at the survivor's hideout, ahead
         -- of the player actually arriving - no chat line, no overlay. The
-        -- emotional reveal is reserved for SAME_SQUARE (kind:"found" below).
+        -- emotional reveal is reserved for EXTREMELY_NEAR (kind:"found" below).
         if player then
             HuntState.spawnLeaveItems(player, reply)
         end
@@ -601,7 +601,7 @@ local function onTick()
             HuntState.completeHunt(player)
             -- The chain may have just advanced to a new survivor at a new
             -- location - force the next proximity check to be treated as
-            -- fresh rather than compared against the stale SAME_SQUARE tier
+            -- fresh rather than compared against the stale EXTREMELY_NEAR tier
             -- from whichever hunt just ended.
             lastTier = nil
         end

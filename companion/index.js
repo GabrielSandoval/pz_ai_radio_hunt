@@ -19,7 +19,7 @@ const baseDir = process.pkg ? path.dirname(process.execPath) : __dirname;
 // one structured {reply, note} call, because they now fire at different
 // moments: SHARED_NOTE_PROMPT runs at VERY_NEAR (the note is written and
 // the item spawns well before the player arrives), SHARED_REVEAL_PROMPT
-// runs later at SAME_SQUARE (the spoken "I had to go" reveal, once they
+// runs later at EXTREMELY_NEAR (the spoken "I had to go" reveal, once they
 // actually reach the empty hideout). See HuntState.spawnLeaveItems/
 // completeHunt in the mod for the Lua side of this split.
 const SHARED_NOTE_PROMPT =

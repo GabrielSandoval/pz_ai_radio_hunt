@@ -4,9 +4,9 @@ local Proximity = {}
 AIRadioHunt.Proximity = Proximity
 
 -- Checked closest-first so a player standing on the target square reads as
--- SAME_SQUARE, not just the loosest tier its distance also happens to
+-- EXTREMELY_NEAR, not just the loosest tier its distance also happens to
 -- satisfy.
-local TIER_ORDER = { "SAME_SQUARE", "VERY_NEAR", "NEAR", "FAR" }
+local TIER_ORDER = { "EXTREMELY_NEAR", "VERY_NEAR", "NEAR", "FAR" }
 
 --- Euclidean tile distance from the player to a target x/y. Z (floor) is
 --- ignored - which floor the player is on doesn't matter for "how close"
