@@ -42,13 +42,16 @@ already were.
 ## Chaining to the next survivor
 
 `Config.Hunts` (`mod/.../AIRadioHunt/Config.lua`) is an ordered array, not
-a single hardcoded location - each entry has its own `personaName`,
-`targetX/Y/Z`, `channel`, and `nextChannel`. `HuntState` tracks each
-character's position in that array (`activeHuntIndex`, in
-`AIRadioHunt_State` ModData) and advances it by one every time
-`HuntState.completeHunt` finishes a hunt that has a next entry - resetting
-`started`/`found`/`itemsSpawned` so the newly-active hunt behaves like a
-fresh one (new target square, new channel gate, new persona).
+a single hardcoded location - each entry now only has `id`/`personaName`
+(identity and order). The real `targetX/Y/Z`/`city`/`channel`/`nextChannel`
+per hunt are randomly generated once per character instead (see "Random
+hunt locations and channels" below) and persisted in that character's own
+`AIRadioHunt_State` ModData as `state.hunts`. `HuntState` tracks each
+character's position in that array (`activeHuntIndex`) and advances it by
+one every time `HuntState.completeHunt` finishes a hunt that has a next
+entry - resetting `started`/`found`/`itemsSpawned` so the newly-active hunt
+behaves like a fresh one (new target square, new channel gate, new
+persona).
 
 The companion mirrors this with a `personas` array in `config.json`
 (`mod/.../Config.lua`'s `Config.Hunts` and the companion's `personas` must
@@ -61,10 +64,11 @@ request now carries `context.huntIndex` (read directly out of
 Jonah never inherits Mara's conversation history (or vice versa) even
 though they share the same PZ character and memory-file directory.
 
-Adding a third survivor: append one more entry to `Config.Hunts` (giving
-the previous last entry a real `nextChannel`), and one more entry to
-`config.json`'s `personas` at the same index - that's the whole extension
-point.
+Adding another survivor: append one more `{id, personaName}` entry to
+`Config.Hunts`, and one more entry to `config.json`'s `personas` at the
+same index - that's the whole extension point. Location and channel need
+no authoring at all now; they're generated automatically the same way
+every other hunt's are.
 
 **Grounding who the player is, once there's a previous survivor** -
 testing surfaced Jonah mistaking the player for Mara. His prompt only said
@@ -150,27 +154,28 @@ rsync -a --delete mod/AIRadioHunt/ ~/Zomboid/mods/AIRadioHunt/
 
 ## The target squares
 
-`mod/AIRadioHunt/42/media/lua/client/AIRadioHunt/Config.lua`'s
-`Config.Hunts[n].targetX/targetY/targetZ` (`6021, 5364, 0` for Mara;
-`6119, 5257, 0` for Jonah) are real occupation spawn-point squares inside
-houses in Riverside, pulled directly from the installed game's own
-`maps/Riverside, KY/spawnpoints.lua` (`poor_houses`/`police_station`
-entries) rather than picked by hand - spawn points are always valid,
-loaded, walkable interior tiles, so both are guaranteed good without
-needing to hand-verify a square in-game first. If you want a different
-location later, the same trick works for any town: check that town's own
-`maps/<Town>/spawnpoints.lua` in the installed game and reuse one of its
-coordinates rather than guessing. No item is pre-spawned at either square -
-finding a survivor is purely a matter of the player's proximity tier
-reaching `EXTREMELY_NEAR` there (see Proximity.lua); the only physical
-evidence left behind is the found-note (see below), not a second
-discoverable radio.
+Each hunt's `targetX/targetY/targetZ` is now randomly picked per character
+from `Config.SpawnPointPool` (see "Random hunt locations and channels"
+below) rather than a fixed `Config.Hunts[n]` field - every pool entry is a
+real occupation spawn-point square inside houses in Riverside, pulled
+directly from the installed game's own `maps/Riverside, KY/spawnpoints.lua`
+(`poor_houses`/`medium_houses`/`rich_houses` entries) rather than picked by
+hand, so every possible pick is guaranteed a valid, loaded, walkable
+interior tile without needing to hand-verify a square in-game first. If you
+want to draw from a different town later, the same trick works for any of
+them: check that town's own `maps/<Town>/spawnpoints.lua` in the installed
+game and add its coordinates to the pool rather than guessing. No item is
+pre-spawned at any square - finding a survivor is purely a matter of the
+player's proximity tier reaching `EXTREMELY_NEAR` there (see
+Proximity.lua); the only physical evidence left behind is the found-note
+(see below), not a second discoverable radio.
 
 Debug helper: type `aicoordinates` in chat (no leading slash - see the
 comment on this check in `AIRadioHunt.lua` for why; never forwarded to the
 active survivor) to print the *currently active* hunt's persona/channel/
-target square into the chat panel, instead of having to look it up in
-`Config.lua` every time.
+target square into the chat panel - this is now the only reliable way to
+know a given character's actual location/frequency, since they're
+generated per character rather than fixed in `Config.lua`.
 
 (On macOS, the installed game's own `media/` tree - useful for verifying
 any other vanilla API - lives inside the app bundle, not at the Steam
@@ -243,9 +248,9 @@ way it does client-side.
 
 The note's text is the companion's `kind:"very_near"` note-writing response
 **plus** a fixed postscript appended in `HuntState.spawnLeaveItems`
-(`nextFrequencyPostscript`) naming the completed hunt's `nextChannel`
-(84.0 MHz for Mara, pointing at Jonah; omitted entirely for the last hunt in
-the chain, which has `nextChannel = nil`). The frequency is deliberately
+(`nextFrequencyPostscript`) naming the completed hunt's `nextChannel` (this
+character's own randomly-generated channel for the next hunt in the chain;
+omitted entirely for the last hunt, which has `nextChannel = nil`). The frequency is deliberately
 never left to the LLM to write itself: it's game truth (something the next
 hunt actually gates on), not a real conversation event, so it's appended in
 Lua the same way raw coordinates are kept out of `Context.build` entirely -
@@ -474,6 +479,51 @@ gate still applies to everything upstream of that (starting a hunt,
 NEAR/VERY_NEAR reactions), since those genuinely are meant to require
 active, in-character contact.
 
+## Random hunt locations and channels
+
+Per direct user request: `Config.Hunts` entries no longer carry a fixed
+`targetX/Y/Z`/`channel` - those are randomly generated once per character
+instead (`HuntState.ensureHuntsGenerated`, `HuntState.lua`), persisted in
+that character's own `AIRadioHunt_State.hunts` ModData, so two different
+characters get two different (but equally valid, equally reachable) hunts
+rather than everyone finding the exact same five spots on the exact same
+five frequencies.
+
+- **Location**: `Config.SpawnPointPool` is a flat list of real, verified,
+  walkable coordinates pulled from the installed game's own
+  `spawnpoints.lua` (the same `poor_houses`/`medium_houses`/`rich_houses`
+  groups used to hand-pick locations before - now the whole pool, not one
+  entry each). `pickSpawnPoints` shuffles it and greedily takes entries at
+  least `Config.MinHuntSeparation` (100 tiles) from every previous pick for
+  this character, falling back to filling remaining slots without that
+  constraint if the pool can't satisfy it for every slot (not an issue at
+  the current pool size vs. hunt count - 18 candidates for 5 hunts).
+- **Channel**: `pickChannels` randomly picks a value on the real 0.2 MHz
+  tuning grid inside `Config.ChannelMin`-`ChannelMax` (75.0-150.0 MHz, same
+  constraints as before - see "The channel gate + starting items" below),
+  rejecting candidates within `Config.ChannelMinSeparation` (2.0 MHz) of
+  either a real vanilla station frequency or another already-picked channel
+  for this character. Bounded retry (200 attempts) per slot rather than an
+  unbounded loop, though the configured range has comfortable room even
+  with the exclusion zones (roughly 240 valid slots remain out of ~375
+  total after excluding everything near the 8 known vanilla stations).
+- The starting note (`Config.StartingNoteTextTemplate`, a `%.1f` format
+  string now instead of a fixed sentence) and the found-note's
+  `nextFrequencyPostscript` both read this character's own generated
+  channel at the point the note is actually written, rather than a
+  constant.
+- Verified with a standalone Lua test simulating 5 different "characters":
+  every run produced distinct, correctly-separated locations and channels,
+  all on the real tuning grid, all clear of vanilla stations.
+
+This intentionally reuses the exact same shape (`id`, `personaName`,
+`targetX/Y/Z`, `city`, `channel`, `nextChannel`) that `Config.Hunts` entries
+used to carry directly - `HuntState.getActiveHunt` still returns that same
+shape, just sourced from `state.hunts[activeHuntIndex]` instead. Every
+other function (`Context.build`, the landmark lookup, `spawnLeaveItems`,
+the companion side entirely) needed zero changes beyond reading from the
+generated table instead of the old static one.
+
 ## Landmark - the other location fact a survivor may state
 
 Same wire format as `city` (see "The channel gate + starting items" above)
@@ -591,16 +641,21 @@ old one.
    risk as DispatchAI - see its dev notes).
 3. Confirm Ollama is running with the configured model pulled
    (`ollama pull llama3.2:3b`).
-4. Host (not Solo) a game with a **new** character (starting items are only
-   given via `Events.OnCreatePlayer`, i.e. character creation, not on
-   loading an existing one) - confirm the starting radio + note appear in
-   inventory immediately. Open the radio and tune it to **76.0 MHz**
-   (`Config.Hunts[1].channel`) - confirm Mara keys in unprompted within a
-   second or two of the channel actually landing on 25.
+4. Host (not Solo) a game with a **new** character - confirm the starting
+   radio + note appear in inventory within a few seconds
+   (`HuntState.ensureStartingItems` retries every ~5 seconds until
+   confirmed present - see "The channel gate + starting items" below).
+   Read the note for the real (randomly-generated for this character)
+   frequency, then open the radio and tune it to that exact number - confirm
+   Mara keys in unprompted within a second or two of the channel landing on
+   it. (Or just run `aicoordinates` immediately - it prints the real channel
+   without needing to read the note first.)
 5. Type `aicoordinates` in chat (no leading slash) - confirm it prints the
    active hunt's persona/channel/target square locally and is never
    forwarded to the companion (check the companion's terminal shows no new
-   request for it).
+   request for it). This is now the only reliable way to know a given
+   character's real numbers, since they're generated per character rather
+   than fixed in `Config.lua`.
 6. Walk toward that target square from beyond 200 tiles out - confirm the
    fixed `Config.NoiseReplyText` line shows with **no** new entry in the
    companion's terminal (no LLM call at all) while still `FAR`.
@@ -633,20 +688,21 @@ old one.
     Note") **immediately**, even before picking it up (the other bug fixed
     alongside item-spawning: configure the item's name/pages *before* the
     first sync call, not after), and shows the generated note text ending
-    with the fixed "try 84.0MHz next" postscript regardless of what the LLM
-    wrote.
-13. **Chaining**: retune your radio to **84.0 MHz** (`Config.Hunts[2].channel`)
-    - confirm Jonah keys in unprompted (a distinct persona/name from Mara,
-      not a repeat of her opening line), `aicoordinates` now reports
-      `Jonah` and his own target square (`6119, 5257, 0`), and the
-      companion creates a *new* memory file (`memory-<id>-jonah.json`) -
-      check `memory-<id>-mara.json` still has Mara's full conversation
-      untouched, proving the two survivors' histories didn't merge. Repeat
-      steps 6-12 for Jonah, then again for Ellis (112.0 MHz), Nadia
-      (128.0 MHz), and Reyes (144.0 MHz - last in the chain, so his own note
-      has no postscript) - each should feel like a distinct personality
-      (Ellis guarded, Nadia chatty and warm, Reyes clipped and transactional)
-      while still behaving mechanically identically end-to-end.
+    with a "try [X]MHz next" postscript (the real next-hunt channel for this
+    character) regardless of what the LLM wrote.
+13. **Chaining**: run `aicoordinates` (or read the note) to get Jonah's real
+    generated channel, retune your radio to it - confirm Jonah keys in
+    unprompted (a distinct persona/name from Mara, not a repeat of her
+    opening line), `aicoordinates` now reports `Jonah` and his own
+    (different, randomly-generated) target square, and the companion
+    creates a *new* memory file (`memory-<id>-jonah.json`) - check
+    `memory-<id>-mara.json` still has Mara's full conversation untouched,
+    proving the two survivors' histories didn't merge. Repeat steps 6-12
+    for Jonah, then again for Ellis, Nadia, and Reyes (last in the chain, so
+    his own note has no postscript) - each should feel like a distinct
+    personality (Ellis guarded, Nadia chatty and warm, Reyes clipped and
+    transactional) while still behaving mechanically identically end-to-end,
+    each at their own real generated location/channel.
 14. Save and reload, re-approach a completed hunt's target square - confirm
     nothing re-spawns and the found dialogue doesn't repeat (ModData
     idempotency flags survive save/reload).
@@ -656,19 +712,15 @@ old one.
 
 ## Known rough edges / next steps
 
-- **Starting items only reach brand-new characters.** `Events.OnCreatePlayer`
-  doesn't fire for a character that already existed before this feature was
-  added (or before the mod was enabled) - such a character never gets the
-  auto-given radio/note. Workaround for testing on an existing character:
-  if they're already carrying any switched-on two-way radio, just open it
-  and retune it to 76.0 MHz by hand - the channel check doesn't care how
-  the radio got there.
-- **Five hardcoded survivors/locations, still a fixed linear chain** - no
-  procedural placement, no relocation, no remaining un-tried archetypes
+- **Five survivors, still a fixed linear chain (order, not location)** -
+  location and channel are now randomly generated per character (see
+  "Random hunt locations and channels" above), but the *order* of personas
+  and the archetype set are still fixed: no remaining un-tried archetypes
   (liar, coward, trickster, hostile, mysterious from the design doc), no
-  survivor network (survivors don't yet know about or reference each other
-  beyond the "you found the previous one's note" grounding message). This
-  slice exists to prove the mechanics, not to be the finished mode.
+  relocation once a hunt starts, no survivor network (survivors don't yet
+  know about or reference each other beyond the "you found the previous
+  one's note" grounding message). This slice exists to prove the
+  mechanics, not to be the finished mode.
 - **`Config.RewardItem` (`Base.Bandage`) is a placeholder** - the design
   doc envisions richer, escalating rewards (vehicle keys, safehouse
   locations, etc.); swap this out once there's more than one hunt to

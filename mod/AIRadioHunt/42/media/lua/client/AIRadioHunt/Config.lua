@@ -14,19 +14,70 @@ Config.PollIntervalTicks = 30
 -- fallback in AIRadioHunt.lua).
 Config.DefaultPersonaName = "Unknown"
 
--- The ordered chain of survivor hunts. HuntState tracks each character's
--- progress through this list (see HuntState.getActiveHunt/completeHunt) -
--- finding one survivor advances to the next, whose frequency is exactly
--- what the previous one's found-note points to (nextChannel). Testing this
--- vertical slice's continuity mechanic only needs two entries; add more
--- the same way.
---
--- `targetX/Y/Z` are real occupation spawn-point squares pulled directly
--- from the installed game's own "maps/Riverside, KY/spawnpoints.lua" (not
--- hand-picked guesses) - spawn points are always valid, loaded, walkable
--- interior tiles, so both are guaranteed good for testing without having
--- to hand-verify a square in-game first.
---
+-- The ordered chain of survivor personas - identity and order ONLY.
+-- Location (targetX/Y/Z/city) and channel are deliberately NOT here - they
+-- are randomly generated once per character (see
+-- HuntState.ensureHuntsGenerated in HuntState.lua) from Config.SpawnPointPool
+-- and Config.VanillaStationFrequencies below, then persisted in that
+-- character's own save data, so two different players get two different
+-- (but equally valid) hunts. HuntState tracks each character's progress
+-- through this list (see HuntState.getActiveHunt/completeHunt) - finding
+-- one survivor advances to the next.
+Config.Hunts = {
+    { id = "mara", personaName = "Mara" },
+    { id = "jonah", personaName = "Jonah" },
+    { id = "ellis", personaName = "Ellis" },
+    { id = "nadia", personaName = "Nadia" },
+    { id = "reyes", personaName = "Reyes" },
+}
+
+-- Real, verified, walkable spawn-point squares on the loaded map, pulled
+-- directly from the installed game's own "maps/Riverside, KY/spawnpoints.lua"
+-- (poor_houses/medium_houses/rich_houses groups - not hand-picked guesses,
+-- not fabricated) - every entry here is guaranteed a valid, loaded,
+-- walkable interior tile without needing to hand-verify a square in-game
+-- first. HuntState.ensureHuntsGenerated randomly picks one per hunt
+-- (without repeats, and kept some distance apart via
+-- Config.MinHuntSeparation below).
+Config.SpawnPointPool = {
+    { x = 5739, y = 5258, z = 0 },
+    { x = 5832, y = 5233, z = 0 },
+    { x = 6021, y = 5364, z = 0 },
+    { x = 6076, y = 5375, z = 0 },
+    { x = 6117, y = 5473, z = 0 },
+    { x = 6167, y = 5412, z = 0 },
+    { x = 6443, y = 5562, z = 0 },
+    { x = 6408, y = 5498, z = 0 },
+    { x = 7342, y = 5981, z = 0 },
+    { x = 7396, y = 6017, z = 0 },
+    { x = 5814, y = 5233, z = 0 },
+    { x = 6081, y = 5344, z = 0 },
+    { x = 6817, y = 5259, z = 0 },
+    { x = 6067, y = 5457, z = 0 },
+    { x = 6502, y = 5517, z = 0 },
+    { x = 6762, y = 5372, z = 0 },
+    { x = 6327, y = 5412, z = 0 },
+    { x = 6726, y = 5514, z = 0 },
+}
+
+-- The one `city` fact every survivor is allowed to state outright if asked
+-- (see the shared "you may name your city" rule in companion/index.js's
+-- buildSystemPrompt/baseMessages) - real coordinates, street names, and
+-- exact addresses stay off-limits regardless. Every Config.SpawnPointPool
+-- entry above is on this one loaded map; a future pool covering a different
+-- map would need its own city value per entry instead of this single
+-- constant.
+Config.SpawnPointCity = "Riverside"
+
+-- Minimum tile distance required between any two of one character's
+-- randomly-picked hunt locations, so consecutive survivors don't end up
+-- awkwardly close together purely by chance. If the pool can't satisfy
+-- this for every slot (not an issue at the current pool size vs hunt
+-- count), HuntState.ensureHuntsGenerated falls back to filling remaining
+-- slots without the constraint rather than leaving a hunt without a
+-- location.
+Config.MinHuntSeparation = 100
+
 -- `channel`/`nextChannel` are PZ's own raw DeviceData channel units (divide
 -- by 1000 for the MHz value shown in the in-game radio UI; confirmed
 -- against RadioCom/RadioWindowModules/RWMGeneral.lua's own frequency
@@ -34,75 +85,29 @@ Config.DefaultPersonaName = "Unknown"
 -- hunt's survivor if its channel is within ChannelTolerance of that hunt's
 -- `channel` - merely carrying a switched-on two-way radio on some other
 -- channel never counts.
---
--- Every hunt channel below is deliberately kept to two constraints,
--- confirmed against the installed game's own files rather than guessed:
--- (1) a multiple of 200 (0.2 MHz) - the real step the in-game tuning UI
--- itself snaps to (`RadioCom/RadioWindowModules/RWMChannel.lua`'s preset
--- slider, via `ISUIRadio/ISSliderPanel.lua:setCurrentValue`'s rounding to
--- `self.stepValue = 0.2`) - so every frequency here is actually reachable
--- by a player using the normal in-game dial, not just by typing a number.
--- (2) inside 75000-150000 (75.0-150.0 MHz) and kept several MHz clear of
--- every real vanilla station broadcasting in that band (confirmed against
--- `media/radio/RadioData.xml`: Hitz FM 89.4, Civilian Radio 91.2, LBMW
--- 93.2, USR 94.2, Classified M1A1 95.0, NNR Radio 98.0, KnoxTalk Radio
--- 101.2, Unknown Frequency 107.6) - so scanning around never crosses actual
--- vanilla broadcast content.
---
--- `city` is a location fact every survivor is allowed to state outright if
--- asked (see the shared "you may name your city" rule in
--- companion/index.js's buildSystemPrompt/baseMessages) - real coordinates,
--- street names, and exact addresses stay off-limits regardless. All five
--- hunts share one `city` value since they're all real spawnpoints on the
--- same loaded map; if a future hunt ever moves to a different map, give
--- that entry its own `city` instead. There is deliberately no per-hunt
--- `landmark` field here - see Config.PointsOfInterest below: landmark is
--- computed dynamically from real coordinates, not hand-authored per hunt,
--- so it keeps working once spawn points are chosen randomly instead of
--- from this fixed list.
-Config.Hunts = {
-    {
-        id = "mara",
-        personaName = "Mara",
-        targetX = 6021, targetY = 5364, targetZ = 0, -- poor_houses entry
-        city = "Riverside",
-        channel = 76000, -- 76.000 MHz
-        nextChannel = 84000, -- 84.000 MHz - Jonah, below
-    },
-    {
-        id = "jonah",
-        personaName = "Jonah",
-        targetX = 6119, targetY = 5257, targetZ = 0, -- police_station entry
-        city = "Riverside",
-        channel = 84000, -- 84.000 MHz
-        nextChannel = 112000, -- 112.000 MHz - Ellis, below
-    },
-    {
-        id = "ellis",
-        personaName = "Ellis",
-        targetX = 7342, targetY = 5981, targetZ = 0, -- poor_houses entry, deliberately the most isolated one (paranoid/reclusive fit)
-        city = "Riverside",
-        channel = 112000, -- 112.000 MHz
-        nextChannel = 128000, -- 128.000 MHz - Nadia, below
-    },
-    {
-        id = "nadia",
-        personaName = "Nadia",
-        targetX = 6817, targetY = 5259, targetZ = 0, -- medium_houses entry
-        city = "Riverside",
-        channel = 128000, -- 128.000 MHz
-        nextChannel = 144000, -- 144.000 MHz - Reyes, below
-    },
-    {
-        id = "reyes",
-        personaName = "Reyes",
-        targetX = 6081, targetY = 5255, targetZ = 1, -- fire_station entry (upper floor) - fits the ex-military/emergency-services background
-        city = "Riverside",
-        channel = 144000, -- 144.000 MHz
-        nextChannel = nil, -- last hunt in the chain for now
-    },
-}
 Config.ChannelTolerance = 50
+
+-- Real vanilla station frequencies (raw units) to keep every randomly
+-- generated hunt channel clear of - confirmed against the installed game's
+-- own media/radio/RadioData.xml: Hitz FM 89.4, Civilian Radio 91.2, LBMW
+-- 93.2, USR 94.2, Classified M1A1 95.0, NNR Radio 98.0, KnoxTalk Radio
+-- 101.2, Unknown Frequency 107.6 (all in raw units below, i.e. MHz * 1000).
+Config.VanillaStationFrequencies = { 89400, 91200, 93200, 94200, 95000, 98000, 101200, 107600 }
+
+-- Randomly generated hunt channels are kept inside this range and to a
+-- step of 200 (0.2 MHz) - the real step the in-game tuning UI itself snaps
+-- to (`RadioCom/RadioWindowModules/RWMChannel.lua`'s preset slider, via
+-- `ISUIRadio/ISSliderPanel.lua:setCurrentValue`'s rounding to
+-- `self.stepValue = 0.2`), so every generated frequency is actually
+-- reachable by a player using the normal in-game dial, not just by typing
+-- a number. 75000-150000 (75.0-150.0 MHz) comfortably sits inside
+-- WalkieTalkie3's real MinChannel/MaxChannel (25000/300000).
+-- ChannelMinSeparation keeps generated channels at least this many raw
+-- units clear of both the vanilla list above and each other.
+Config.ChannelMin = 75000
+Config.ChannelMax = 150000
+Config.ChannelStep = 200
+Config.ChannelMinSeparation = 2000
 
 -- Real, named landmarks with real coordinates (all confirmed against the
 -- installed game's own "maps/Riverside, KY/spawnpoints.lua", same source
@@ -147,7 +152,10 @@ Config.StartingRadioVolume = 5
 
 Config.StartingNoteItem = "Base.Notepad"
 Config.StartingNoteTitle = "Mara's letter" -- always Mara's - this is onboarding for Config.Hunts[1] specifically, not a per-hunt title
-Config.StartingNoteText = "please... if anyone out there can hear this... tune in to Channel 76.0MHz."
+-- %.1f gets replaced with this character's own randomly-generated hunt #1
+-- channel (in MHz) at the point the note is actually created - see
+-- HuntState.ensureStartingItems - since that's no longer a fixed constant.
+Config.StartingNoteTextTemplate = "please... if anyone out there can hear this... tune in to Channel %.1fMHz."
 
 -- Reward + note items spawned on the player's square once a hunt is found.
 -- Base.Notepad is a vanilla Literature item with CanBeWrite=true, so it

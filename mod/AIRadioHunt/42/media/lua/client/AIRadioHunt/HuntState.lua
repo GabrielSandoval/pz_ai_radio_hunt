@@ -8,13 +8,14 @@ AIRadioHunt.HuntState = HuntState
 --- Lazily initializes and returns this character's hunt-lifecycle table,
 --- persisted in their own ModData (survives save/load, distinct per
 --- character - same pattern Context.lua uses for its characterId).
---- `activeHuntIndex` is this character's position in Config.Hunts - starts
---- at 1 (the first survivor) and advances by one each time completeHunt
---- finishes a hunt that has a next entry in the chain. `itemsSpawned`
---- tracks whether the reward/note have been placed for the *current* hunt
---- (done early, at VERY_NEAR - see spawnLeaveItems), separately from
---- `found` (only set once the player actually reaches the exact square -
---- see completeHunt).
+--- `activeHuntIndex` is this character's position in `hunts` (this
+--- character's own randomly-generated location/channel per Config.Hunts
+--- slot - see ensureHuntsGenerated below) - starts at 1 (the first
+--- survivor) and advances by one each time completeHunt finishes a hunt
+--- that has a next entry in the chain. `itemsSpawned` tracks whether the
+--- reward/note have been placed for the *current* hunt (done early, at
+--- VERY_NEAR - see spawnLeaveItems), separately from `found` (only set
+--- once the player actually reaches the target square - see completeHunt).
 local function getState(player)
     local modData = player:getModData()
     if not modData.AIRadioHunt_State then
@@ -29,10 +30,151 @@ local function getState(player)
     return modData.AIRadioHunt_State
 end
 
---- Returns Config.Hunts[activeHuntIndex] for this character, or nil once
---- every hunt in the chain has been completed (nothing left to do).
+--- Fisher-Yates shuffle into a new table - never mutates `list`.
+local function shuffledCopy(list)
+    local copy = {}
+    for i, v in ipairs(list) do
+        copy[i] = v
+    end
+    for i = #copy, 2, -1 do
+        local j = ZombRand(i) + 1
+        copy[i], copy[j] = copy[j], copy[i]
+    end
+    return copy
+end
+
+--- Randomly picks `count` entries from Config.SpawnPointPool, preferring
+--- ones at least Config.MinHuntSeparation tiles from every other pick so
+--- consecutive survivors don't end up awkwardly close together purely by
+--- chance. Falls back to filling any remaining slots without that
+--- constraint (never leaving a hunt without a location) if the pool can't
+--- satisfy it for every slot.
+local function pickSpawnPoints(count)
+    local shuffled = shuffledCopy(Config.SpawnPointPool)
+    local picked = {}
+
+    local function farEnough(candidate)
+        for _, p in ipairs(picked) do
+            local dx, dy = candidate.x - p.x, candidate.y - p.y
+            if math.sqrt(dx * dx + dy * dy) < Config.MinHuntSeparation then
+                return false
+            end
+        end
+        return true
+    end
+
+    for _, candidate in ipairs(shuffled) do
+        if #picked >= count then break end
+        if farEnough(candidate) then
+            table.insert(picked, candidate)
+        end
+    end
+
+    if #picked < count then
+        for _, candidate in ipairs(shuffled) do
+            if #picked >= count then break end
+            local alreadyPicked = false
+            for _, p in ipairs(picked) do
+                if p == candidate then
+                    alreadyPicked = true
+                    break
+                end
+            end
+            if not alreadyPicked then
+                table.insert(picked, candidate)
+            end
+        end
+    end
+
+    return picked
+end
+
+local function isClearOfVanillaStations(channel)
+    for _, freq in ipairs(Config.VanillaStationFrequencies) do
+        if math.abs(channel - freq) < Config.ChannelMinSeparation then
+            return false
+        end
+    end
+    return true
+end
+
+--- Randomly picks `count` distinct channels inside
+--- Config.ChannelMin-ChannelMax, on the real Config.ChannelStep grid, each
+--- kept Config.ChannelMinSeparation clear of both real vanilla station
+--- frequencies and every other picked channel. Bounded retry per slot
+--- (200 attempts) rather than an unbounded loop - the configured range
+--- comfortably has room for a handful of channels even with the exclusion
+--- zones, but this guarantees termination regardless.
+local function pickChannels(count)
+    local channels = {}
+    local steps = math.floor((Config.ChannelMax - Config.ChannelMin) / Config.ChannelStep)
+
+    local function farFromPicked(candidate)
+        for _, c in ipairs(channels) do
+            if math.abs(candidate - c) < Config.ChannelMinSeparation then
+                return false
+            end
+        end
+        return true
+    end
+
+    for _ = 1, count do
+        local candidate
+        local attempts = 0
+        repeat
+            candidate = Config.ChannelMin + ZombRand(steps + 1) * Config.ChannelStep
+            attempts = attempts + 1
+        until (isClearOfVanillaStations(candidate) and farFromPicked(candidate)) or attempts > 200
+        table.insert(channels, candidate)
+    end
+
+    return channels
+end
+
+--- Lazily generates (once per character, persisted in ModData) this
+--- character's own real location + channel for every entry in Config.Hunts
+--- - random per Config.SpawnPointPool/Config.VanillaStationFrequencies
+--- (see pickSpawnPoints/pickChannels above), not read from a fixed list, so
+--- two different characters get two different (but equally valid, equally
+--- reachable) hunts. Returns the same shape Config.Hunts entries used to
+--- carry directly (id, personaName, targetX/Y/Z, city, channel,
+--- nextChannel), so every other function in this file and Context.lua
+--- needed zero changes beyond reading from here instead.
+function HuntState.ensureHuntsGenerated(player)
+    local state = getState(player)
+    if state.hunts then
+        return state.hunts
+    end
+
+    local count = #Config.Hunts
+    local points = pickSpawnPoints(count)
+    local channels = pickChannels(count)
+
+    local hunts = {}
+    for i, template in ipairs(Config.Hunts) do
+        local point = points[i]
+        hunts[i] = {
+            id = template.id,
+            personaName = template.personaName,
+            targetX = point.x,
+            targetY = point.y,
+            targetZ = point.z,
+            city = Config.SpawnPointCity,
+            channel = channels[i],
+            nextChannel = channels[i + 1], -- nil for the last hunt, correctly
+        }
+    end
+
+    state.hunts = hunts
+    print("[AIRadioHunt] generated random hunt locations/channels for this character")
+    return hunts
+end
+
+--- Returns this character's own generated hunts[activeHuntIndex], or nil
+--- once every hunt in the chain has been completed (nothing left to do).
 function HuntState.getActiveHunt(player)
-    return Config.Hunts[getState(player).activeHuntIndex]
+    local hunts = HuntState.ensureHuntsGenerated(player)
+    return hunts[getState(player).activeHuntIndex]
 end
 
 function HuntState.getActiveHuntIndex(player)
@@ -121,6 +263,13 @@ function HuntState.ensureStartingItems(player)
     end
     state.startingItemsRetryTicks = 0
 
+    -- The starting note names hunt #1's real, randomly-generated channel -
+    -- ensureHuntsGenerated is idempotent, so calling it here just reads the
+    -- (already generated, in the common case) hunts back rather than
+    -- regenerating anything.
+    local firstHunt = HuntState.ensureHuntsGenerated(player)[1]
+    local noteText = string.format(Config.StartingNoteTextTemplate, firstHunt.channel / 1000)
+
     print("[AIRadioHunt] ensureStartingItems: sending giveStartingItems client command (attempt)")
     local ok, err = pcall(sendClientCommand, player, "AIRadioHunt", "giveStartingItems", {
         radioItem = Config.StartingRadioItem,
@@ -128,7 +277,7 @@ function HuntState.ensureStartingItems(player)
         radioVolume = Config.StartingRadioVolume,
         noteItem = Config.StartingNoteItem,
         noteTitle = Config.StartingNoteTitle,
-        noteText = Config.StartingNoteText,
+        noteText = noteText,
     })
     if ok then
         print("[AIRadioHunt] ensureStartingItems: sendClientCommand call completed without error")
@@ -182,7 +331,7 @@ function HuntState.spawnLeaveItems(player, noteText)
     end
     state.itemsSpawned = true
 
-    local hunt = Config.Hunts[state.activeHuntIndex]
+    local hunt = HuntState.ensureHuntsGenerated(player)[state.activeHuntIndex]
     local fullText = (noteText or "...") .. nextFrequencyPostscript(hunt)
 
     sendClientCommand(player, "AIRadioHunt", "spawnFoundItems", {

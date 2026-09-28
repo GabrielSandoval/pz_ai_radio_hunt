@@ -95,10 +95,12 @@ Every new character starts with a working two-way radio (already switched
 on) and a torn note in their inventory:
 
 > *"please... if anyone out there can hear this... tune in to Channel
-> 76.0MHz."*
+> [X]MHz."*
 
-Open the radio (right-click it -> **Set Frequency**, or however your radio
-UI exposes it) and dial it to **76.0 MHz**. Any working two-way radio -
+The frequency is different every playthrough - the note itself always has
+the real number to dial in. Open the radio (right-click it -> **Set
+Frequency**, or however your radio UI exposes it) and dial in whatever
+channel the note gives you. Any working two-way radio -
 walkie talkie or ManPack, not a listen-only portable radio or a stationary
 HAM set - switched on and tuned to that exact channel counts, whether it's
 your starting radio or one you find later. It can be in your hand, worn, or
