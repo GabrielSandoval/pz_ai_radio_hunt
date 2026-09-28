@@ -1,15 +1,11 @@
 # AI Radio Hunt
 
-**GitHub:** [github.com/GabrielSandoval/pz_ai_radio_hunt](https://github.com/GabrielSandoval/pz_ai_radio_hunt)
-
-**Companion downloads:** [Releases page](https://github.com/GabrielSandoval/pz_ai_radio_hunt/releases/latest)
-
-AI Radio Hunt turns your Project Zomboid radio into a scavenger hunt. Somewhere
-out there, a survivor - **Mara** - has a walkie-talkie of her own. Talk to
+AI Radio Hunt turns your Project Zomboid radio into a scavenger hunt.
+Somewhere out there, a survivor has a walkie-talkie of her own. Talk to
 her, listen for how close you're getting, and track down where she's
-hiding, powered by an AI model running locally on your own PC. By the time
-you reach the spot, she's already had to move on - but she leaves behind a
-reward and a handwritten note.
+hiding, powered by an AI model running locally on your own PC. Reach her,
+and the hunt pays off with a reward and a handwritten note - written from
+your real conversation, never invented.
 
 > This is a vertical-slice build: a short fixed chain of survivors, fixed
 > locations, no relocation yet. See `DEVELOPMENT.md` for what's still ahead.
@@ -21,6 +17,7 @@ No coding involved - just two things, once, and you're ready:
 **1. Set up the Companion app.** Download it, unzip it, run it. It handles
 installing everything else (the AI engine, and the AI model) for you
 automatically.
+
 **2. Install the mod.** Subscribe on the Workshop, turn it on, hit play.
 
 ### 1. Set up the Companion app
@@ -109,33 +106,32 @@ just sitting in a bag or pocket - it doesn't need to be equipped, just
 carried, on, and on the right channel.
 
 Once you're in a Host game with the mod enabled, the companion app running,
-and a radio like that on you, Mara will key in on her own within a few
-seconds: *"Hello? Is anyone there?"*
+and a radio like that on you, the survivor will key in on her own within a
+few seconds: *"Hello? Is anyone there?"*
 
 Type back like you'd text a friend, and she'll reply in character. She has
 no real way to sense how far away you are at long range, so unexplained
 static plays over the line while you're still far out. Once you're getting
 near, she'll actually catch sight of you for the first time - she might
-mention something you're visibly wearing or carrying. Once you're very
-close, she quietly decides she can't stay any longer - you won't hear
-anything about it yet, but a reward and a handwritten note are already
-waiting at the spot by the time you actually get there.
+mention something you're visibly wearing or carrying. Keep closing the
+distance, and the hunt builds toward its payoff: a reward and a handwritten
+note, grounded in what you actually talked about, waiting for you at the
+exact spot.
 
 Real, audible reactions your own character has - pain, hunger, cold, a
 jammed weapon, and the like - can come through too, the same way they would
-if you were actually holding an open mic: Mara clearly hears your own voice
+if you were actually holding an open mic: she clearly hears your own voice
 come through, even if you didn't mean to say anything to her.
 
-When you finally reach the exact spot, the hunt ends - but she's not there.
-That's when she explains why she had to go, live over the radio, before the
-line goes quiet. The note - written from your actual conversation, not made
-up, and hinting at the next frequency to try - was left behind for you to
-find and read.
+When you finally reach the exact spot, the hunt reaches its conclusion -
+what happens plays out live over the radio. The note - written from your
+actual conversation, not made up, and hinting at the next frequency to try
+- is there for you to find and read.
 
 A couple of things worth knowing:
 - The floating line above your character only shows if your radio's volume
-  is turned up - if it's muted, Mara still hears and replies to you, you
+  is turned up - if it's muted, she still hears and replies to you, you
   just won't see the floating bubble (it still shows in chat either way).
 - Commands (anything starting with `/`) are ignored and won't trigger a
   reply.
-- Mara keeps replies short - a sentence or two, like a real radio exchange.
+- She keeps replies short - a sentence or two, like a real radio exchange.
