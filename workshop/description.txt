@@ -1,0 +1,32 @@
+[b]AI Radio Hunt[/b] turns your radio into a scavenger hunt.
+
+Somewhere out there, a survivor has a walkie-talkie of her own. Talk to her, listen for how close you're getting, and track down where she's hiding - powered by an AI model that runs locally on your own PC, not the cloud. By the time you reach the spot, she's already had to move on, but she leaves behind a reward and a handwritten note - one that's actually written from your real conversation, never invented. Find her, and you'll pick up the next survivor's frequency.
+
+[i]Walkie Talkie. AI Driven. Find the voices. Follow the story.[/i]
+
+[b]This mod needs one extra (free) thing to work[/b]
+Unlike most mods, this one talks back in real time using a real AI model - and that model has to run somewhere. Rather than relying on a paid cloud service, it runs entirely on your own PC through [b]Ollama[/b] (free, local, private - nothing you say is sent anywhere). This means a small companion app needs to be running in the background alongside the game.
+
+Full step-by-step setup (no coding involved, just installing two normal programs) is here:
+[url=https://github.com/GabrielSandoval/pz_ai_radio_hunt]github.com/GabrielSandoval/pz_ai_radio_hunt[/url]
+
+[b]Companion app downloads (Windows & macOS):[/b]
+[url=https://github.com/GabrielSandoval/pz_ai_radio_hunt/releases/latest]Releases page[/url]
+
+[b]How it works[/b]
+[list]
+[*] Every new character starts with a working radio and a torn note hinting at a frequency.
+[*] Tune in, and a survivor keys in on her own - text back like you're texting a real person.
+[*] She has no way to sense your exact distance, but she reacts as you actually get closer - eventually she'll really spot you, mentioning something you're visibly wearing or carrying.
+[*] Get close enough and she has to leave - but not before you find what she left behind: a reward, and a note grounded in what you actually talked about.
+[*] Her note points you toward the next survivor's frequency. The hunt continues.
+[/list]
+
+[b]Status: vertical slice[/b]
+This is an early, actively-developed build - a short fixed chain of survivors, fixed locations, no relocation mechanic yet. See the GitHub repo's DEVELOPMENT.md for exactly what's built and what's still ahead.
+
+[b]Requirements[/b]
+[list]
+[*] Must be played in [b]Host[/b] (not Solo) - Host looks and plays identically to Solo, it's just what turns on the in-game chat window survivors reply through.
+[*] The companion app + Ollama (see link above) must be running on your PC whenever you play.
+[/list]
