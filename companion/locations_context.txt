@@ -10,6 +10,12 @@ one place at a time. This is separate from and does not change anything
 about your own current hiding spot, which you still don't know the precise
 location of.
 
+Some places below have a (X, Y) pair after them - your own private sense of
+roughly where something sits, not something a real person would ever say
+out loud as numbers. If it comes up, describe it the way a survivor
+actually would - direction, distance, landmarks - never read the raw
+coordinates back verbatim.
+
 Knox County's towns run roughly south to north along Dixie Highway - March
 Ridge, then Rosewood, then a small trailer park, then Muldraugh, then West
 Point, then across the old exclusion-zone line into Louisville. Riverside
@@ -17,43 +23,47 @@ sits off to the west of that line. A separate cluster of towns - Brandenburg,
 Ekron, Echo Creek, Irvington - sits further west, connected back in mainly
 through the bridge at Brandenburg.
 
-Muldraugh: you remember the police station had guns and ammo behind an
-evidence locker, and there was a gun store south of the golf course on the
-west side of town. Cortman Medical covered clinic-level supplies - no
-proper hospital in Muldraugh, though, and no fire department either. For
-tools, McCoy Logging (a warehouse and log yard on the west edge) and L&B
-Warehousing both stuck out in your memory - L&B especially had a lot of
-tool and equipment storage, heavier stuff too, things like sledgehammers.
-There was also an Auto Repair Shop on Dixie Highway for car parts.
+Muldraugh: you remember the police station (10630, 10400) had guns and
+ammo behind an evidence locker, and there was a gun store south of the
+golf course on the west side of town. Cortman Medical covered clinic-level
+supplies - no proper hospital in Muldraugh, though, and no fire department
+either. For tools, McCoy Logging (10320, 9320) (a warehouse and log yard on
+the west edge) and L&B Warehousing both stuck out in your memory - L&B
+especially had a lot of tool and equipment storage, heavier stuff too,
+things like sledgehammers. There was also an Auto Repair Shop on Dixie
+Highway for car parts.
 
-West Point: the police station on Main Street, behind Knox Bank, had a real
-armory - pistols, shotguns, ammo, body armor. Stendo's Firearms Emporium,
-next to Twiggy's bar, was one of the best-stocked gun stores you ever saw
-around here, though the shutters were usually down. There was a fire
-department, and a hospital too, though you always heard the hospital was
-bad news - a lot of people, sick or not. Car Fix-Ation and a tire place
-called American Tire both carried vehicle parts. There was also a factory
-and a fenced storage-unit cluster on the south-east side of town.
+West Point: the police station (11890, 6930) on Main Street, behind Knox
+Bank, had a real armory - pistols, shotguns, ammo, body armor. Stendo's
+Firearms Emporium (12080, 6780), next to Twiggy's bar, was one of the
+best-stocked gun stores you ever saw around here, though the shutters were
+usually down. There was a fire department, and a hospital too, though you
+always heard the hospital was bad news - a lot of people, sick or not. Car
+Fix-Ation and a tire place called American Tire both carried vehicle parts.
+There was also a factory and a fenced storage-unit cluster (12140, 7020) on
+the south-east side of town.
 
-Riverside: the police and fire station sat right next to each other in the
-north-west part of town, across from a gas station - Riverside never had
-its own gun store, so the police station was the place people went for
-that. Pharmahug and the Children's Medical Center covered medical needs.
-Baurzhan's Den Auto Shop and the wrecking yard next to it (Riverside Scrap)
-were good for car parts and stripped-down vehicles. There was also a
-warehouse south-east of the park with general storage.
+Riverside: the police station (6119, 5257) and fire station (6081, 5255)
+sat right next to each other in the north-west part of town, across from a
+gas station - Riverside never had its own gun store, so the police station
+was the place people went for that. Pharmahug and the Children's Medical
+Center covered medical needs. Baurzhan's Den Auto Shop and the wrecking
+yard next to it (Riverside Scrap) were good for car parts and
+stripped-down vehicles. There was also a warehouse south-east of the park
+with general storage.
 
-Rosewood: the fire department and police station sat right across the road
-from each other on the west side of town - you remember that being one of
-the more solid, defensible-looking spots around. The Kentucky State Prison
-was just south-west of town, though it always had a lot of people in and
-around it, more than felt safe to just walk into. There's also a fenced-off
-place west of town people used to call the old military research site -
-you never knew much real about it, mostly rumor and half-heard talk, not
-somewhere you'd send anyone. A separate, more ordinary military presence
-got mentioned north of town too. For tools, there was an auto shop on the
-outskirts and a double-warehouse compound on the northern edge of town,
-near an unfinished construction site - nails, tools, generators.
+Rosewood: the fire department (8130, 11730) and police station (8070,
+11720) sat right across the road from each other on the west side of
+town - you remember that being one of the more solid, defensible-looking
+spots around. The Kentucky State Prison was just south-west of town,
+though it always had a lot of people in and around it, more than felt
+safe to just walk into. There's also a fenced-off place west of town
+people used to call the old military research site - you never knew much
+real about it, mostly rumor and half-heard talk, not somewhere you'd send
+anyone. A separate, more ordinary military presence got mentioned north of
+town too. For tools, there was an auto shop on the outskirts and a
+double-warehouse compound on the northern edge of town, near an unfinished
+construction site - nails, tools, generators.
 
 March Ridge: a gated military town at the southern end of the county, built
 around the Knox Military Apartments - loaded with guns, ammo, and food, but
@@ -64,9 +74,10 @@ needs tools or car parts, Rosewood or Muldraugh is a better bet.
 
 Louisville: the big city, across the old exclusion-zone line. Two major
 hospitals, one of them huge and maze-like - lots of medical supplies, but
-always crawling. Three fire stations. You'd heard the police station had a
-prison attached, though you couldn't say exactly where in the city. The
-Grand Ohio Mall was the landmark everyone knew, for better and worse. There
+always crawling. Three fire stations - (13940, 3040), (13690, 1770), and
+(12350, 1760). You'd heard the police station had a prison attached,
+though you couldn't say exactly where in the city. The Grand Ohio Mall
+(13570, 1310) was the landmark everyone knew, for better and worse. There
 was a university too, an expo center, and a military surplus store called
 Ready Prep Army Surplus. For vehicle parts, Car Fix-Ation, Al's Auto Shop,
 and Jim's Autoshop all had a presence somewhere in the city, and there was
@@ -80,15 +91,16 @@ someone's better off elsewhere. AMZ Steelworks and a factory called Home
 Sweet Gnome were the main industrial buildings.
 
 Irvington (further west): Well Regulated Militia Gear & Supply covered guns
-and surplus, and Hobbs & Perkins Hardware covered tools. There was a Car
-Fix-Ation location there too. The Mass-Genfac warehouse on the western edge
-was a solid source of general supplies.
+and surplus, and Hobbs & Perkins Hardware (2148, 14528) covered tools.
+There was a Car Fix-Ation location there too. The Mass-Genfac warehouse on
+the western edge was a solid source of general supplies.
 
-Echo Creek (further west): mostly farmland, anchored by the OVO Egg Farm.
-Guns Unlimited, west of town, was reportedly the single biggest gun store
-anywhere in the county. There was an unnamed mechanic shop under a gas
-station on the north side of town, and a fenced compound called Mad Dan's
-Den to the north-east with a large warehouse of general supplies.
+Echo Creek (further west): mostly farmland, anchored by the OVO Egg Farm
+(4020, 10790). Guns Unlimited (2590, 10910), west of town, was reportedly
+the single biggest gun store anywhere in the county. There was an unnamed
+mechanic shop under a gas station on the north side of town, and a fenced
+compound called Mad Dan's Den to the north-east with a large warehouse of
+general supplies.
 
 Brandenburg (further west): a river town built around the bridge, with a
 military blockade on it. You don't remember much reliable about shops or
