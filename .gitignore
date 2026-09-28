@@ -2,3 +2,4 @@
 node_modules/
 companion/dist/
 companion/memory-*.json
+dist-release/
