@@ -73,8 +73,28 @@ running in the background every time you play.
 2. Launch Project Zomboid.
 3. From the main menu, click **Mods**, find **AI Radio Hunt** in the list,
    and switch it on.
-4. Start or load a game using **Host** (not Solo - see below), then restart
-   the game once so the mod turns on.
+4. From the main menu, click **Host** (not Solo - see below).
+5. On the Host Game screen, click **Manage settings...**
+6. Pick the settings preset you're about to play with (or create a new one),
+   then click **Edit**.
+7. A **"Mods used by this server"** window pops up - click **Choose Mods...**,
+   find **AI Radio Hunt** in the list, and switch it on there too, then click
+   **NEXT**.
+8. In the settings editor that opens, check the left-hand list for a
+   **Mods** page and a **Steam Workshop** page - confirm **AI Radio Hunt**
+   shows up on both (it should have been added automatically by the step
+   above). If it's missing from the Steam Workshop page, add it there too
+   using **"Add an installed Workshop item to the list."**
+9. Click **SAVE**, then back on the Host Game screen, click **START**
+   (restarting the game first if this is an existing save, so the mod
+   actually turns on).
+
+> **Why do I have to add it twice (Mods screen *and* server settings)?** The
+> main menu's **Mods** screen only affects your own game client. **Host**
+> mode runs its own separate built-in server behind the scenes, and that
+> server keeps its own independent mod list - it does not automatically
+> pick up whatever's checked in the main menu. Both need AI Radio Hunt
+> enabled, or the mod won't actually load.
 
 > **Why Host and not Solo?** It looks and plays exactly like Solo - you're
 > still the only one playing - but Project Zomboid's chat window (which is
