@@ -19,35 +19,13 @@ Don't worry - there's no coding involved. You're just installing two normal
 programs (like installing any app on your computer) and turning on a mod.
 Do these in order, once, and you're set up for good.
 
-### Step 1 - Install Ollama (the free AI engine that runs on your PC)
+### Step 1 - Download and run the AI Radio Hunt Companion
 
-This is the "brain" the survivors use to talk to you. It runs entirely on
-your own computer - nothing is sent over the internet, and it's free.
-
-1. Go to **[ollama.com](https://ollama.com)** and click the download button
-   for your operating system (Windows or Mac).
-2. Open the file you downloaded and click through the installer like you
-   would for any other program (Next -> Next -> Finish).
-3. Open the Ollama app once it's installed. You should see its little llama
-   icon appear in your system tray (Windows, bottom-right near the clock)
-   or menu bar (Mac, top-right).
-4. Now you need to tell Ollama to download the specific AI model this mod
-   uses. This is the one part that needs a command:
-   - **Windows:** press the Windows key, type `cmd`, and press Enter to open
-     Command Prompt.
-   - **Mac:** press Cmd+Space, type `terminal`, and press Enter.
-   - A plain black/white text window will open. Type or paste this exactly,
-     then press Enter:
-     ```
-     ollama pull llama3.2:3b
-     ```
-   - Wait for it to finish downloading (a progress bar will fill up) - this
-     only ever needs to be done once. Then you can close that window.
-
-### Step 2 - Download and run the AI Radio Hunt Companion
-
-This is a small program that connects the mod to Ollama. It has to be
-running in the background every time you play.
+This is a small program that connects the mod to a free, local AI engine
+called **Ollama** (the "brain" the survivors use to talk to you - it runs
+entirely on your own computer, nothing is sent over the internet). It has
+to be running in the background every time you play. It also takes care of
+installing/setting up Ollama for you - you don't need to do that separately.
 
 1. Go to the [**Companion downloads page**](https://github.com/GabrielSandoval/pz_ai_radio_hunt/releases/latest)
    and download the `.zip` for your operating system (`AIRadioHunt-Companion-Windows.zip`
@@ -60,6 +38,15 @@ running in the background every time you play.
    whole time you're playing. It's working correctly as long as that window
    stays open; if you close it, survivors will stop being able to reply. You
    can minimize it, just don't close it.
+5. **If this is your first time**, that window will notice Ollama isn't
+   installed yet and automatically open its download page in your browser.
+   Install it like any other program (Next -> Next -> Finish) and open it
+   once - you'll see a small llama icon appear in your system tray (Windows)
+   or menu bar (Mac). Then just go back to the Companion window: it'll
+   detect Ollama is ready and automatically download the AI model it needs
+   (a one-time download, may take a few minutes depending on your internet
+   connection) - no commands to type, just wait for it to say the model is
+   ready.
 
 > **macOS only:** the first time you double-click `Start AIRadioHunt.command`,
 > macOS may say it can't be opened because it's from an unidentified
@@ -67,7 +54,7 @@ running in the background every time you play.
 > instead of double-clicking, choose **Open**, then click **Open** again on
 > the popup - you only need to do this once.
 
-### Step 3 - Install the mod itself
+### Step 2 - Install the mod itself
 
 1. Subscribe to **AI Radio Hunt** on the Steam Workshop.
 2. Launch Project Zomboid.

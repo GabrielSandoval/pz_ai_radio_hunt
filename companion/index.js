@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { exec } = require('child_process');
 
 // When packaged with pkg, __dirname points into the read-only virtual
 // snapshot baked into the executable, and process.pkg is set. Real,
@@ -650,4 +651,113 @@ function poll() {
     });
 }
 
-setInterval(poll, config.pollMs);
+// Opens a URL in the user's default browser - cross-platform equivalent of
+// double-clicking a link, used only to point a first-time user at the
+// Ollama download page. Fire-and-forget: a failure here (e.g. an unusual
+// Linux setup with no xdg-open) just means they have to open the link
+// themselves, not a fatal error.
+function openUrl(url) {
+    const cmd =
+        process.platform === 'darwin' ? `open "${url}"` :
+        process.platform === 'win32' ? `start "" "${url}"` :
+        `xdg-open "${url}"`;
+    exec(cmd, () => {});
+}
+
+async function isOllamaRunning() {
+    try {
+        const res = await fetch(`${config.ollamaHost}/api/tags`);
+        return res.ok;
+    } catch {
+        return false;
+    }
+}
+
+async function isModelInstalled() {
+    try {
+        const res = await fetch(`${config.ollamaHost}/api/tags`);
+        if (!res.ok) return false;
+        const data = await res.json();
+        const names = (data.models || []).map((m) => m.name);
+        return names.includes(config.model);
+    } catch {
+        return false;
+    }
+}
+
+// Streams Ollama's own pull progress (NDJSON lines like
+// {"status":"downloading","completed":N,"total":M}) straight to the
+// console, so a non-technical user just sees a normal-looking progress log
+// in the same window they already have open, instead of needing to run
+// `ollama pull` themselves in a separate terminal.
+async function pullModel() {
+    console.log(`Downloading the "${config.model}" AI model - this is a one-time download and may take a few minutes...`);
+    const res = await fetch(`${config.ollamaHost}/api/pull`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: config.model, stream: true }),
+    });
+    if (!res.ok || !res.body) {
+        throw new Error(`Model download request failed: ${res.status}`);
+    }
+
+    let lastLoggedPct = -1;
+    for await (const chunk of res.body) {
+        const lines = chunk.toString('utf8').split('\n').filter(Boolean);
+        for (const line of lines) {
+            let evt;
+            try {
+                evt = JSON.parse(line);
+            } catch {
+                continue;
+            }
+            if (evt.total && evt.completed) {
+                const pct = Math.floor((evt.completed / evt.total) * 100);
+                if (pct !== lastLoggedPct && pct % 10 === 0) {
+                    lastLoggedPct = pct;
+                    console.log(`  ${evt.status || 'downloading'}: ${pct}%`);
+                }
+            } else if (evt.status) {
+                console.log(`  ${evt.status}`);
+            }
+        }
+    }
+    console.log(`Model "${config.model}" is ready.`);
+}
+
+// Replaces the old "install Ollama and run `ollama pull ...` yourself"
+// instructions with an automatic check: if Ollama isn't reachable yet, open
+// its download page and wait (a first-time user just needs to install and
+// open it - no terminal command required); once it's up, pull the model
+// automatically if it isn't already present. Runs once at startup, before
+// the request-polling loop begins.
+async function ensureOllamaReady() {
+    let running = await isOllamaRunning();
+    if (!running) {
+        console.log('');
+        console.log('Ollama (the local AI engine this mod needs) does not seem to be installed or running yet.');
+        console.log('Opening the download page in your browser - install it, open it once, and this window will continue automatically.');
+        console.log('');
+        openUrl('https://ollama.com/download');
+        while (!running) {
+            await new Promise((resolve) => setTimeout(resolve, 5000));
+            running = await isOllamaRunning();
+        }
+        console.log('Ollama detected - continuing...');
+    }
+
+    if (await isModelInstalled()) {
+        console.log(`Model "${config.model}" already installed.`);
+    } else {
+        await pullModel();
+    }
+}
+
+ensureOllamaReady()
+    .then(() => {
+        setInterval(poll, config.pollMs);
+    })
+    .catch((err) => {
+        console.error('Startup check failed:', err.message);
+        process.exit(1);
+    });
