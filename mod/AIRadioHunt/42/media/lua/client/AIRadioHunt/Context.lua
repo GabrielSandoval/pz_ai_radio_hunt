@@ -37,23 +37,29 @@ end
 --- survivor's conversation memory separate) - read directly out of the
 --- same AIRadioHunt_State ModData table HuntState.lua manages, rather than
 --- requiring that module here, to avoid coupling Context.lua's load order
---- to HuntState.lua's. `city`/`landmark` are the only location facts Lua
---- actually hands the LLM - real coordinates, addresses, and exact street
---- names are never included here, only these two coarse, game-truth facts
---- the survivor is allowed to state outright. `landmark` is computed here
---- (via Proximity.nearestPointOfInterest against Config.PointsOfInterest),
---- not read from a hardcoded per-hunt field - this is what keeps it working
---- once hunt target squares are chosen randomly rather than from the fixed
---- Config.Hunts list.
+--- to HuntState.lua's. Same reasoning for reading `state.hunts` (this
+--- character's own randomly-generated per-hunt targetX/Y/city - see
+--- HuntState.ensureHuntsGenerated) directly out of ModData here, rather
+--- than calling into HuntState.lua for it - `Config.Hunts` itself is only
+--- the identity/order template now (id/personaName), it does NOT carry
+--- real location data any more. `city`/`landmark` are the only location
+--- facts Lua actually hands the LLM - real coordinates, addresses, and
+--- exact street names are never included here, only these two coarse,
+--- game-truth facts the survivor is allowed to state outright. `landmark`
+--- is computed here (via Proximity.nearestPointOfInterest against
+--- Config.PointsOfInterest), not read from a hardcoded per-hunt field -
+--- this is what keeps it working once hunt target squares are chosen
+--- randomly.
 function Context.build(player, proximityTier, tierChanged)
     local ctx = {}
 
     ctx.characterId = getOrCreateCharacterId(player)
 
     local modData = player:getModData()
-    ctx.huntIndex = (modData.AIRadioHunt_State and modData.AIRadioHunt_State.activeHuntIndex) or 1
+    local state = modData.AIRadioHunt_State
+    ctx.huntIndex = (state and state.activeHuntIndex) or 1
 
-    local hunt = Config.Hunts[ctx.huntIndex]
+    local hunt = state and state.hunts and state.hunts[ctx.huntIndex]
     ctx.city = hunt and hunt.city
     ctx.landmark = hunt and Proximity.nearestPointOfInterest(
         hunt.targetX, hunt.targetY, Config.PointsOfInterest, Config.LandmarkMaxDistance
