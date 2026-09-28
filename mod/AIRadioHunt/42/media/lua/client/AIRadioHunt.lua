@@ -427,21 +427,20 @@ local function onPlayerUpdate(player)
         return
     end
 
-    if tier == "EXTREMELY_NEAR" then
-        if not pendingRequestId then
-            print("[AIRadioHunt] found: player reached " .. hunt.personaName .. "'s target square")
-            local context = Context.build(player, tier, true)
-            pendingRequestId = Bridge.sendRequest(nil, context, "found")
-            pendingRequestKind = "found"
-            lastTier = tier
-        end
-        -- else: leave lastTier alone and retry next tick once the in-flight
-        -- request clears, so reaching the target square is never silently
-        -- missed just because a sound trigger happened to fire the same tick.
-    elseif tier == "VERY_NEAR" then
-        -- Once items are spawned, the early return above (still tuned to
-        -- this hunt's channel or not) handles everything from here on -
-        -- this branch only ever runs before that first happens.
+    if tier == "EXTREMELY_NEAR" or tier == "VERY_NEAR" then
+        -- Reaching here at all means items haven't been spawned yet (the
+        -- early return above already handles the found/reveal once they
+        -- are), so this always means "write the note and spawn items now" -
+        -- never the reveal itself directly, regardless of which of the two
+        -- tiers this actually is. Treating EXTREMELY_NEAR the same as
+        -- VERY_NEAR here specifically covers a player reaching the target
+        -- square in a single jump without ever passing through VERY_NEAR
+        -- range first (a vehicle covering more than 20 tiles in one tick,
+        -- or a debug teleport) - without this, the reveal fired with no
+        -- note/reward ever actually spawned (real bug, caught in testing).
+        -- The reveal itself (kind:"found") is only ever sent from the
+        -- areItemsSpawned branch above, once a later tick confirms items
+        -- are actually there.
         if not pendingRequestId then
             local context = Context.build(player, tier, true)
             pendingRequestId = Bridge.sendRequest(nil, context, "very_near")
